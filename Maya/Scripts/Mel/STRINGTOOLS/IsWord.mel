@@ -1,0 +1,11 @@
+global proc int IsWord (string $String, string $item)
+{
+	string	$matchString = ($item + "+");
+
+	if (`match $matchString $String` == $item)
+	{
+		return  yes;
+	}
+
+	return no;
+}

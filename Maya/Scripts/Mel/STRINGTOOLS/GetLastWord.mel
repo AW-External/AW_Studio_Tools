@@ -1,0 +1,8 @@
+global proc string GetLastWord (string $Str)
+{
+	string $List[];
+	
+	tokenize $Str "," $List;
+	
+	return $List[(size($List) -1)];
+}

@@ -1,0 +1,4 @@
+global proc string GetLastChar (string $item)
+{
+    return `match ".$" $item`;
+}

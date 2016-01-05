@@ -1,0 +1,24 @@
+global proc int[] DML_ReversedVertexWinding()
+{
+    int $winding_order[];
+    
+    int $i=$j=$add=0;
+    
+    for($i in DML_Range(0,(`DML_EvaluatePoly "f"`),1) )
+    {
+        //find the vertex indices used by this face and split the returned string
+        string $split[];
+         
+        //add the face number and vertex count for this face to the string
+        tokenize(match("[^:]+$",stringArrayToString(`polyInfo -fv (".f["+$i+"]")`,"")),$split);
+        
+        for($j in `DML_ReverseRange 0 (size($split)) 1`)
+        {
+            int $index = $split[$j];
+            
+            $winding_order[$add++] = $index;
+        }
+    }
+    
+    return $winding_order;
+}

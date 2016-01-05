@@ -1,0 +1,164 @@
+proc string[] Separator(string $Data)
+{
+	string $Parsered[];
+	
+	// Check if $Args is empty
+	//
+	if(!`size $Data`)
+	{
+		return {};
+	}
+	else
+	{		
+		while( ( gmatch ( (",") , ( match ( (",") , ($Data) ) ) ) ) )
+		{	
+			$Data = substitute( (",") , $Data , (" ") );
+		}
+		
+		while( ( gmatch ( (";") , ( match ( (";") , ($Data) ) ) ) ) )
+		{	
+			$Data = substitute( (";") , $Data , (" ") );
+		}
+				
+		tokenize $Data $Parsered;
+	}
+	
+	return $Parsered;
+}
+
+proc string Directory (string $Dirflag)
+{
+    string $Dir = (`DML_Save_Location ("-get " + $Dirflag + " ")`+"\\");
+    
+    return $Dir;
+}
+
+proc string[] File_List(string $Dirflag)
+{
+    string $Dir = `Directory $Dirflag`;
+    
+    string $FileList[] = `getFileList -folder $Dir -filespec "*.txt"`;
+    
+    int $i;
+	
+	//DML_DisplaySA "DML_RawFileOps" "Get_Raw_FileList" "$ArgList" $FileList;
+    
+    return $FileList;
+}
+
+proc string clear_Directory (string $Dirflag)
+{
+	string $f,$FileList[] = `File_List $Dirflag`;
+    
+    string $Dir = `Directory $Dirflag`;
+	
+	for ($f in $FileList)
+		sysFile -delete ($Dir+$f);
+	
+	return "Cleared";
+}
+
+proc Open_file ( string $Dirflag ,string $FileName)
+{
+    global int $Raw_id;
+    
+	string $File = (`Directory  $Dirflag ` + $FileName+".txt");
+	
+	$Raw_id = `fopen $File "r"`;
+	
+    if((size(`fgetline $Raw_id`)))
+    {
+    	frewind $Raw_id;
+    }
+    else
+    {
+    	fclose $Raw_id;
+    	error("The Raw File Did Not Appear To Open Properly "+$File);
+    }
+	print $File; 
+}
+
+proc string[] Read_File()
+{
+    global int $Raw_id;
+    
+    string $Tokenized[];
+	
+    string $Line = (strip(`fgetline $Raw_id`));
+	
+	tokenize $Line $Tokenized;
+    
+    return $Tokenized;
+}
+
+proc Rewind_File()
+{
+    global int $Raw_id;
+    
+    frewind $Raw_id;
+}
+
+proc string Close_file()
+{
+    global int $Raw_id;
+    
+    $Raw_id = `fclose $Raw_id`;
+	
+	return "Closed";
+}
+
+proc string End_Of_file ()
+{
+    global int $Raw_id;
+    
+    if(`feof $Raw_id`)
+    {
+        return "no";
+    }
+    else
+    {
+        return "yes";
+    }
+}
+
+global proc DML_FileOps(string $Args, string $ArgList[])
+{
+	clear $ArgList;
+	
+	DML_ArgParser $Args $ArgList;
+	
+	switch($ArgList[0])
+	{
+		case "-open":
+		$ArgList[0] = `Open_file $ArgList[1] $ArgList[2]`;
+			break;
+			
+		case "-clear":
+			clear_Directory $ArgList[1];
+			break;
+			
+		case "-list":
+			$ArgList = `File_List $ArgList[1]`;
+			break;
+			
+		case "-close":
+			Close_file;
+			break;
+			
+		case "-read":
+			$ArgList = `Read_File`;
+			break;
+			
+		case "-rewind":
+			Rewind_RawFile;
+			break;
+			
+		case "-end":
+			End_Of_Rawfile;
+			break;
+			
+		case "-path":
+			Directory $ArgList[1];
+			break;
+	}
+}

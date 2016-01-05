@@ -1,0 +1,40 @@
+global proc DML_OpenWhatIs()
+{
+	string $text;
+	string $result = `promptDialog -title "Rename Object" -message "Enter Name:" -button "OK" -button "Cancel" -defaultButton "OK" -cancelButton "Cancel" -dismissString "Cancel"`;
+	
+	if ($result == "OK")
+	{
+		$text = `promptDialog -query -text`;
+		
+		$text = `whatIs $text`;
+		
+		if (`startsWith $text S`)
+		{
+			system ("load " + match("[^Script found in: ].+",$text) );
+		}
+		else if (`startsWith $text M`)
+		{
+			system ("load "+ match("[^Mel procedure found in: ].+",$text) );
+		}
+		else if($text=="Command")
+		{
+			help -doc `promptDialog -query -text`;
+		}
+		
+		if($text=="Unknown")
+		{
+			if(`confirmDialog -title "Confirm" -message "it came up unknow Check Another" -button "Yes" -button "No" -defaultButton "No" -cancelButton "No" -dismissString "No"` == "Yes")
+			{
+				DML_OpenWhatIs;
+			}
+		}
+		else
+		{
+			if(`confirmDialog -title "Confirm" -message "Would you like to Check Another" -button "Yes" -button "No" -defaultButton "No" -cancelButton "No" -dismissString "No"` == "Yes")
+			{
+				DML_OpenWhatIs;
+			}
+		}
+	}
+}

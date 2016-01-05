@@ -1,0 +1,44 @@
+global proc DML_SnapToGrid(float $snapVal, int $axis)
+{
+    //Creates a virtual grid of a given subdivision interval
+    //and snaps selected object to nearest virtual point
+    //
+
+    string $sel_items[] = `ls -sl` ;
+    int $sel_size = `size( $sel_items )` ;
+
+    int $c;
+    for( $c = 0; $c < $sel_size; $c ++ )
+    {
+        float $tx, $ty, $tz;
+
+        string $obj = $sel_items[$c];
+
+        $tx = floor( float((`getAttr ($obj + ".tx")` / $snapVal) + 0.5) ) * $snapVal;
+        $ty = floor( float((`getAttr ($obj + ".ty")` / $snapVal) + 0.5) ) * $snapVal;
+        $tz = floor( float((`getAttr ($obj + ".tz")` / $snapVal) + 0.5) ) * $snapVal;
+
+        if ($axis == 1 || $axis == 0)
+            {
+            setAttr ($obj + ".tx") $tx ;
+            print ($obj+".tx : snapped to "+$tx+"\n");
+            }
+        if ($axis == 2 || $axis == 0)
+            {
+            setAttr ($obj + ".ty") $ty ;
+            print ($obj+".ty : snapped to "+$ty+"\n");
+            }
+        if ($axis == 3 || $axis == 0)
+            {
+            setAttr ($obj + ".tz") $tz ;
+            print ($obj+".tz : snapped to "+$tz+"\n");
+            }
+        if ($axis == -1)
+            {
+            setAttr ($obj + ".ty") 0; //ground plane snap
+            print ($obj+".ty : snapped to ground plane\n");
+            }
+
+    }
+}
+

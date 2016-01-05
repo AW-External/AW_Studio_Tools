@@ -1,0 +1,21 @@
+global proc float[] DML_VertexUvValues ()
+{
+    int $add=$i=$j=$k=0;
+    int $PerFace_Count[] = `DML_PerFaceIndexCount`;
+    int $Extraction_Order[] = `DML_ReversedVertexWinding`;    
+    float $UV[];
+
+    for($i in DML_Range(0,(`DML_EvaluatePoly f`),1) )
+    {
+        for($j in `DML_Range 0 $PerFace_Count[$i] 1`)
+        {
+            string $Conversion[] = `polyListComponentConversion -fromVertexFace -toUV (".vtxFace["+$Extraction_Order[($k++)]+"]["+$i+"]")`;
+            
+            float $values[] = `polyEditUV -q $Conversion[0]`;
+            
+            $UV[$add++] = $values[0];
+            $UV[$add++] = $values[1];
+        }
+    }
+    return $UV;
+}

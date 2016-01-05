@@ -1,0 +1,5 @@
+global proc float[] VectorToFloat (vector $v)
+{
+	return {($v.x),($v.y),($v.z)};
+}
+

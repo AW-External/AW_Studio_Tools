@@ -1,0 +1,111 @@
+proc DirectxMatrix (string $clone)
+{
+	float $Resault[];
+	float $m1[] = `xform -q -os -m $clone`;
+	float $m2[] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+	
+	/*M[0][0]*/  $Resault[0]  = (($m1[0]  * $m2[0]) + ($m1[1]  * $m2[4]) + ($m1[2]  * $m2[8])  + ($m1[3]  * $m2[12]));
+	/*M[0][1]*/  $Resault[1]  = (($m1[0]  * $m2[1]) + ($m1[1]  * $m2[5]) + ($m1[2]  * $m2[9])  + ($m1[3]  * $m2[13]));
+	/*M[0][2]*/  $Resault[2]  = (($m1[0]  * ($m2[2]*-1)) + ($m1[1]  * ($m2[6]*-1)) + ($m1[2]  * ($m2[10]*-1)) + ($m1[3]  * ($m2[14]*-1)));
+	/*M[0][3]*/  $Resault[3]  = (($m1[0]  * $m2[3]) + ($m1[1]  * $m2[7]) + ($m1[2]  * $m2[11]) + ($m1[3]  * $m2[15]));
+	/*M[1][0]*/  $Resault[4]  = (($m1[4]  * $m2[0]) + ($m1[5]  * $m2[4]) + ($m1[6]  * $m2[8])  + ($m1[7]  * $m2[12]));
+	/*M[1][1]*/  $Resault[5]  = (($m1[4]  * $m2[1]) + ($m1[5]  * $m2[5]) + ($m1[6]  * $m2[9])  + ($m1[7]  * $m2[13]));
+	/*M[1][2]*/  $Resault[6]  = (($m1[4]  * ($m2[2]*-1)) + ($m1[5]  * ($m2[6]*-1)) + ($m1[6]  * ($m2[10]*-1)) + ($m1[7]  * ($m2[14]*-1)));
+	/*M[1][3]*/  $Resault[7]  = (($m1[4]  * $m2[3]) + ($m1[5]  * $m2[7]) + ($m1[6]  * $m2[11]) + ($m1[7]  * $m2[15]));
+	/*M[2][0]*/  $Resault[8]  = (($m1[8]  * ($m2[0]*-1)) + ($m1[9]  * ($m2[4]*-1)) + ($m1[10] * ($m2[8]*-1))  + ($m1[11] * ($m2[12]*-1)));
+	/*M[2][1]*/  $Resault[9]  = (($m1[8]  * ($m2[1]*-1)) + ($m1[9]  * ($m2[5]*-1)) + ($m1[10] * ($m2[9]*-1))  + ($m1[11] * ($m2[13]*-1)));
+	/*M[2][2]*/  $Resault[10] = (($m1[8]  * $m2[2]) + ($m1[9]  * $m2[6]) + ($m1[10] * $m2[10]) + ($m1[11] * $m2[14]));
+	/*M[2][3]*/  $Resault[11] = (($m1[8]  * $m2[3]) + ($m1[9]  * $m2[7]) + ($m1[10] * $m2[11]) + ($m1[11] * $m2[15]));
+	/*M[3][0]*/  $Resault[12] = (($m1[12] * $m2[0]) + ($m1[13] * $m2[4]) + ($m1[14] * $m2[8])  + ($m1[15] * $m2[12]));
+	/*M[3][1]*/  $Resault[13] = (($m1[12] * $m2[1]) + ($m1[13] * $m2[5]) + ($m1[14] * $m2[9])  + ($m1[15] * $m2[13]));
+	/*M[3][2]*/  $Resault[14] = (($m1[12] * ($m2[2]*-1)) + ($m1[13] * ($m2[6]*-1)) + ($m1[14] * ($m2[10]*-1)) + ($m1[15] * ($m2[14]*-1)));
+	/*M[3][3]*/  $Resault[15] = (($m1[12] * $m2[3]) + ($m1[13] * $m2[7]) + ($m1[14] * $m2[11]) + ($m1[15] * $m2[15]));
+	
+	xform -m $Resault[0] $Resault[1] $Resault[2] $Resault[3] 
+		   $Resault[4] $Resault[5] $Resault[6] $Resault[7] 
+		   $Resault[8] $Resault[9] $Resault[10] $Resault[11] 
+		   $Resault[12] $Resault[13] $Resault[14] $Resault[15] $clone;
+}
+
+proc DirectX_UVs()
+{
+	string $comp,$Comps[] = ` ls -flatten (".map[*]") `;
+	for($comp in $Comps)
+	{
+		float $xy[] = `polyEditUV -q $comp`;
+		
+		int $iU =  (match(".",`DML_FloatToString(abs($xy[0]))`));
+		int $iV = (match(".",`DML_FloatToString(abs($xy[1]))`));
+		float $U = (match(".[0-9]+$",`DML_FloatToString(abs($xy[0]))`));
+		float $V = (match(".[0-9]+$",`DML_FloatToString(abs($xy[1]))`));		
+		
+		polyEditUV -r 0 -u ((abs(($U-$iU)))) -v (((abs($V-$iV))*-1)+1) $comp;
+	}
+}
+
+
+proc DirectxVertices (string $clone)
+{	
+	float $Pointsz[] = `getAttr ($clone+".cp[*].zv")`;
+	int $i;
+	
+	for($i = 0; $i < `size $Pointsz` ; $i++)
+	{
+		setAttr ($clone+".cp["+$i+"].zv") ($Pointsz[$i]*-1);
+	}
+}
+
+proc Make_Clone ()
+{
+	string $Selected = `DML_FirstSelected`;
+	
+	if(`DML_IsTransformMesh`)
+	{
+		
+		string $AllTransforms[] = `duplicate -rr -renameChildren $Selected`; 
+		
+		if(size (`listRelatives -p $AllTransforms`))
+			$AllTransforms = `parent -w $AllTransforms[0]`;
+		
+		if(size (`listRelatives -c -path -type transform $AllTransforms[0]`))
+			delete `listRelatives -c -path -type transform $AllTransforms[0]`;
+		
+		string $Clone = `rename $AllTransforms[0] ("Pure_Transform_"+(DML_PureName($Selected)))`;
+		string $CloneShape = `DML_GetShape`;
+		
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		
+		float $rotPiv[] = `xform -query -ws -rotatePivot`;
+		
+		makeIdentity -apply false -t 1 -r 1 -s 1 -n 0;
+		
+		xform -relative -t   ($rotPiv[0]*-1) ($rotPiv[1]*-1) ($rotPiv[2]*-1) ".vtx[*]";
+		
+		xform -t ($rotPiv[0]) ($rotPiv[1]) ($rotPiv[2]) ;
+		
+		DirectxVertices $Clone;
+		DirectxMatrix $Clone;
+		DirectX_UVs;
+	}
+}
+
+global proc Hiarky()
+{
+	DML_ConvertAllInstences;
+	
+	string $Node;
+	
+	string $Groups[] = `listRelatives -ad -type transform "Export_Group*"`;
+		
+	for($Node in `ls $Groups`)
+	{
+		select -r $Node;
+		Make_Clone;
+	}
+	
+	group -empty -name "Extraction_set";
+	
+	parent  `ls "Pure_Transform_*"` "Extraction_set";
+	
+	
+}

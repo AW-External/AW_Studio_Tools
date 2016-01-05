@@ -1,0 +1,15 @@
+global proc int DML_IsTransformMesh ()
+{
+    string $MeshTransforms[] = listTransforms("-visible -type mesh");
+    
+    int $i = 0;
+    
+    string $item = DML_FirstSelected();
+    
+    while( $i < size($MeshTransforms) )
+    {
+        if(`isSameObject $item $MeshTransforms[$i++]`)
+            return true;
+    }
+    return false;
+}

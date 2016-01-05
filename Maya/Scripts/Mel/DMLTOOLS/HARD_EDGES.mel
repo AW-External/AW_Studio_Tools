@@ -1,0 +1,36 @@
+global proc string[] HARD_EDGES ()
+{
+    global string $GS_DX3D_Current_Mesh;
+    
+    int $a,$b,$c;
+    
+    $Vertex_Faces = `ls -flatten ($GS_DX3D_Current_Mesh+".vtxFace[*][*]")`;
+
+    string $Vertex_Faces_and_Vertices[];clear $Vertex_Faces_and_Vertices;
+    
+    for ($a = 0; $a < (size($Vertex_Faces));$a++)
+    {
+	    string $Info = (Flatten_Selection_List (`polyListComponentConversion -toEdge $Vertex_Faces[$a]`));
+
+	    $Info = (Flatten_Selection_List (`polyInfo -edgeToVertex $Info`));
+
+	    $Info = strip ($Info);
+
+    	if (`gmatch "Hard" (endString($Info,4))`)
+    	{
+            string $verts[];
+		    $verts[0] = $Vertex_Faces[$a];
+		    appendStringArray($Vertex_Faces_and_Vertices, $verts, 1);
+    	}
+	    else
+	    {
+		    string $verts[0] = `polyListComponentConversion -toVertex $Vertex_Faces[$a]`;
+		
+		    if ((stringArrayContains($verts[0], $Vertex_Faces_and_Vertices)) == 0)
+		    {
+			    //appendStringArray($Vertex_Faces_and_Vertices, $verts, 1);
+		    }
+	    } 
+    }
+    return $Vertex_Faces_and_Vertices;
+}

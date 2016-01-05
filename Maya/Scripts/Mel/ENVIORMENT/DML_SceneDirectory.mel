@@ -1,0 +1,8 @@
+global proc string DML_SceneDirectory ()
+{
+	DML_IsFileSaved;
+	
+	string $SceneDir = (((`DML_WorkSpace`)+(`DML_SceneName`)));
+    
+    return $SceneDir;
+}

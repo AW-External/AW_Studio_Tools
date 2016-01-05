@@ -1,0 +1,87 @@
+proc Make_Rows(string $Smatrix[])
+{
+	// Get The Name Of The Currently Selected Transform Node
+	//
+	string $transform = (DML_PureName(`DML_FirstSelected`));
+	
+	// Make some intagers for itarating
+	//
+	int $i = $j = $a = 0;
+	
+	// Make a copy for the Giver String Array
+	//
+	string $rows[] =  $Smatrix;
+	
+	// Remove all data form the Given String Array
+	//
+	clear $Smatrix;
+	
+	//Add D3DX Templeat Frame
+	//
+	$Smatrix[size($Smatrix)] = ("Frame "+$transform+"{"); 
+	
+	//Add D3DX Templeat Name
+	//
+	$Smatrix[size($Smatrix)] = ("FrameTransformMatrix"); 
+	
+	// more D3DX Formating
+	//
+	$Smatrix[size($Smatrix)] = ("{");
+	
+	for($i=0,$j=0,$a=0;$i<4;$i++,$j=0)
+	{
+		// Make a String to hold the Combined 4 Array items
+		// 
+		string $row = "\t";
+		
+		while($j<4)
+		{
+			//Combine 4 array items that reperesent 1 row of a matirx
+			//
+			$row += ($rows[$a++] + ",");
+			$j++;
+		}
+		
+		//add it on to string array that will mimic a matirx look like this 1.0,1.0,1.0,
+		//
+		$Smatrix[size($Smatrix)] = $row;
+	}
+	
+	// Changes the late Charcter in the last array form , to ;;
+	// for proper D3DX formating
+	//
+	DML_ReplaceLastCharOfLastIndex ($Smatrix,";;");
+	
+	// Compleat the Transform Matrix formatting
+	$Smatrix[size($Smatrix)] = ("}");
+}
+
+global proc D3DX_FRAME ()
+{
+	// Get The Name Of The Currently Selected Transform Node
+	//
+	string $transform = ("Extraction_Matrix_"+(DML_PureName(`DML_FirstSelected`)));
+	
+	global int $G_DX_SPACE;
+	
+	string $Smatrix[];
+	
+	float $Fmatrix[];
+	
+	$Fmatrix = getAttr($transform+".worldMatrix");
+	
+	$Fmatrix[2] *= -1;
+	$Fmatrix[6] *= -1;
+	$Fmatrix[8] *= -1;
+	$Fmatrix[9] *= -1;
+	$Fmatrix[14] *= -1;
+	
+	string $Smatrix[] = `DML_FloatToStringArray $Fmatrix`;
+	
+	Make_Rows $Smatrix;
+	
+	FPRINT_ITEMS_WITH_TAB $Smatrix;
+	//print $Smatrix;
+}
+
+

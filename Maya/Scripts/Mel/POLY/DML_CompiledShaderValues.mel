@@ -1,0 +1,154 @@
+proc float Avarage_Transparency(string $Shader)
+{
+	float $transparency[] = `getAttr ($Shader+".transparency")`;
+	
+	float $Combine = (($transparency[0]+$transparency[1]+$transparency[2])/3);
+    
+    return $Combine;
+}
+
+proc Color (string $Shader, float $AllShaderValues[])
+{
+	float $colors[] = (`getAttr ($Shader+".color")`);
+	
+	$AllShaderValues[`size $AllShaderValues`] = $colors[0];
+	$AllShaderValues[`size $AllShaderValues`] = $colors[1];
+	$AllShaderValues[`size $AllShaderValues`] = $colors[2];
+	$AllShaderValues[`size $AllShaderValues`] = `Avarage_Transparency $Shader`;
+}
+
+proc Power (string $Shader,float $AllShaderValues[])
+{   
+	if (`attributeExists "cosinePower" $Shader`)
+    {
+		 $AllShaderValues[`size $AllShaderValues`] = (`getAttr ($Shader+".cosinePower")`);
+    }
+	else if (`attributeExists "roughness" $Shader`)
+    {
+		$AllShaderValues[`size $AllShaderValues`] = `getAttr ($Shader+".roughness")`;
+    }
+	else
+    {
+	    $AllShaderValues[`size $AllShaderValues`] = 0.0;
+    }
+}
+
+proc Specular (string $Shader, float $AllShaderValues[])
+{   
+	if (`attributeExists "specularColor" $Shader`)
+	{
+		float $f[] = `getAttr ($Shader+".specularColor")`;
+		
+	    $AllShaderValues[`size $AllShaderValues`] = $f[0];
+	    $AllShaderValues[`size $AllShaderValues`] = $f[1];
+	    $AllShaderValues[`size $AllShaderValues`] = $f[2];
+	}
+	else
+	{
+	    $AllShaderValues[`size $AllShaderValues`] = 0.0;
+	    $AllShaderValues[`size $AllShaderValues`] = 0.0;
+	    $AllShaderValues[`size $AllShaderValues`] = 0.0;
+	}
+}
+
+proc Ambient (string $Shader, float $AllShaderValues[])
+{
+	float $anb[] = `getAttr ($Shader+".ambientColor")`;
+    
+	    $AllShaderValues[`size $AllShaderValues`] = $anb[0];
+	    $AllShaderValues[`size $AllShaderValues`] = $anb[1];
+	    $AllShaderValues[`size $AllShaderValues`] = $anb[2];
+}
+
+proc string TextureFile (string $Shader)
+{
+	//DETERMAIN WEATHER OR NOT A COLOR FILE EXISTS
+	string $File[] = `defaultNavigation -defaultTraversal -destination ($Shader+".color")`;
+	
+	if ($File[0]!="")
+	{
+		string $Path = getAttr( $File[0]+".fileTextureName");
+		
+		$File[0] = ((basenameEx($Path))+"."+(fileExtension($Path)));
+		
+		return $File[0];
+	}
+	else
+	{
+		return "None";
+	}
+}
+
+proc AddunfoundElements (string $item, string $array[])
+{
+	int $i = 0;
+	int $check = 1;
+	while(( $i < size($array) )&&($check))
+		if($item == $array[$i++])
+			$check = 0;
+	
+	if($check)
+		$array[size($array)] = $item;
+}
+
+proc string[] Attached_Shaders()
+{
+	//REGESTER THE FACE'S FOR THE THE OBJECT WE ARE INTERESTED IN
+	//
+	string $F,$Meshfaces[] =  `DML_ComponetList("f")`;
+	
+	string $shaders[];
+	
+	//GET A LIST OF ALL THE CONNECTED SHADERS
+	//
+	for($F in $Meshfaces)
+	{
+		string $ShaderName = `DML_CompShaderAssinment $F`;
+		
+		AddunfoundElements $ShaderName $shaders;
+	}
+	return $shaders;
+}
+
+global proc string[] DML_CompiledShaderValues()
+{   
+	string $Shader,$Shaders[] = `Attached_Shaders`;
+	float $AllShaderValues[];
+	string $ShaderNames[];
+	string $TextureNames[];
+	string $ReturnArray[];
+	
+	for($Shader in $Shaders)
+	{
+		$ShaderNames[`size $ShaderNames`] = $Shader;
+		
+		Color $Shader $AllShaderValues;
+		
+		Power $Shader $AllShaderValues;
+		
+		Specular $Shader $AllShaderValues;
+		
+		Ambient $Shader $AllShaderValues;
+		
+		$TextureNames[`size $TextureNames`] = `TextureFile $Shader`;
+    }
+    
+    string $transfer[] = `DML_HardCodefloats $AllShaderValues`;
+    
+    int $Tally,$i,$j,$nShaders = (`size $Shaders`);
+    
+    for($i in `DML_Range 0 $nShaders 1`)
+    {
+	    $ReturnArray[`size $ReturnArray`] = $ShaderNames[$i];
+	    
+	    for($j in `DML_Range 0 11 1`)
+	    {
+		    $ReturnArray[`size $ReturnArray`] = $transfer[$Tally++];
+	    }
+	    
+	    $ReturnArray[`size $ReturnArray`] = $TextureNames[$i];    
+    }
+    
+    return $ReturnArray;
+    
+}

@@ -1,0 +1,5 @@
+global proc int FloatToInt(float $f)
+{
+	int $i = $f;
+	return $i;
+}

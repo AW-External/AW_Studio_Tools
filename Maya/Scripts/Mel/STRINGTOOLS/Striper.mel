@@ -1,0 +1,22 @@
+global proc string Striper (string $List)
+{
+    string $Expr = "\"";
+    string $replacer = "";
+    string $Striped = "";
+    string $sub = "";
+    // Remove the ", if any and replace them with Nothing
+    //
+    while( $sub != $List ) 
+    {
+        // Do this only after the first time.
+        //
+        if( $sub != "" ) 
+        {
+            $List = $sub;
+        }
+
+        $sub = `substitute $Expr $List $replacer`;
+    }
+    $Striped = `substring $sub 2 (size($sub)-1)`;
+    return $Striped;
+}

@@ -1,0 +1,58 @@
+global proc string[] DML_HardCodeVectors(vector $Values[])
+{
+    $id = fopen("C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt","w");
+    
+    int $nValues = `size $Values`;
+    int $i,$j;
+    vector $v;
+    string $return[];
+    
+    for($i = 0; $i<$nValues; $i++)
+    {
+        fwrite $id $Values[$i];
+    }
+    
+    fclose $id;
+    
+    $id = fopen("C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt","r");
+    
+    for($i = 0; $i<$nValues; $i++)
+    {
+        string $str;
+        string $strA[];
+        $str = `fread $id $v`;
+        
+        tokenize $str " " $strA;
+        
+        for($str in $strA)
+        {
+            if(`match "[\.]" $str` == ".")
+            {
+                if(`match "e" $str` == "e")
+                {
+                    $return[`size $return`] = "0.0";
+                }
+                else
+                {
+                    $return[`size $return`] =  $str;
+                }
+            }
+            else
+            {
+                if(`match "e" $str` == "e")
+                {
+                    $return[`size $return`] =  "0.0";
+                }
+                else
+                {
+                    $return[`size $return`] = ($str+".0");
+                }
+            }
+        }
+        
+    }
+    
+    fclose $id;
+    
+    return $return;
+}

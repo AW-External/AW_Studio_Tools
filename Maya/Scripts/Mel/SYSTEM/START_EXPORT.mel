@@ -1,0 +1,256 @@
+// Data Manipulation Fuctions
+
+proc append.string(string $Array[],string $Item){
+	$Array[`size $Array`] = $Item;
+}
+proc stringArray.append(string $Array1[], string $Array2[]){
+	global string $dml_gStringArray[];
+    int $i = 0;
+    eval("string $dml_gStringArray[" + (`size $Array1` + `size $Array2`) + "];");
+	for($Item in $Array1) $dml_gStringArray[$i++]=$Item;
+    for($Item in $Array2) $dml_gStringArray[$i++]=$Item;
+    $Array1 = $dml_gStringArray;
+    clear $dml_gStringArray;
+}
+proc set.TestMode(int $switch){
+    optionVar -intValue "DmlDx_TestMode" $switch;
+}
+proc int get.TestMode(){
+	// check if optional variable exists
+	if(`optionVar -exists "DmlDx_TestMode"`){
+    	// if it does not then it will be created
+    	// and set to a value of 1
+    	set.TestMode 1;
+    }
+    // return the optional variable
+    return `optionVar -q "DmlDx_TestMode"`;
+}
+
+// Storage Node Fuctions
+
+proc get.FileList(string $Files[], string $directory, string $type){
+    if($type == "") $type = "*.*";
+    if (`filetest -d $directory`){
+    	string $list[] = `getFileList -folder $directory -filespec $type`;
+        int $i,$j,$k;
+        for($i = 0, $j = `size $list`, $k = `size $Files`; $i < $j; $i++, $k++){
+        	$Files[$k]=$list[$i];
+        }
+    }
+}
+proc delete.Directory(string $directory){
+	$directory = `toNativePath $directory`;
+    // Check if the directory exixts
+	if(!`filetest -d $directory`){
+	    // if directory does not exixts
+    	// stop execution of script
+	    // and tell the user why
+	    error -sl ("the input directory " + $directory + "could not be found\n");
+    }
+    // Try to delete the directory
+    if(!`sysFile -delete $directory`){
+		// If unable to delete directory
+    	// stop execution of script
+    	// and tell the user why
+    	error -sl ("the input directory '" + $directory + "' could not be deleted\n");
+    }
+}
+proc delete.File(string $file, string $directory){
+    // combine directory and file into a single path
+    string $path = ($directory + "\\" + $file);
+    // Check if the directory exixts
+	if(!`filetest -d $directory`){
+    	// if directory does not exixts
+	    // stop execution of script
+	    // and tell the user why
+    	error -sl ("the input directory " + $directory + "could not be found\n");
+    }
+    // Check if the file path exists
+	if(!`filetest -r $path`){
+    	// if file does not exixts
+    	// stop execution of script
+	    // and tell the user why
+        error -sl ("the input file '" + $file + "' could not be found in '" + $directory + "'\n");
+    }
+    // Try to delete the file
+    if(!`sysFile -delete $path`){
+	    // If unable to delete file
+	    // stop execution of script
+	    // and tell the user why
+    	error -sl ("the input file '" + $file + "' located in '" + $directory + "' could not be deleted\n");
+    }
+}
+proc string create.Directory(string $directory){
+	$directory = `toNativePath $directory`;
+    // Check if directory exists
+    // if directory already exists
+    // then exists continue
+	if(!`filetest -d $directory`){
+    	// if directory does not exists
+    	// try to create it
+        if(!`sysFile -md $directory`){
+			// If unable to create directory
+        	// stop execution of script
+            // and tell the user why
+        	error -sl ("Could not creat directory " + $directory + "\n");
+        }
+        else{
+	        // Warn the user
+            // that this script has
+            // created a new directory
+            // and display the full directory path
+    	    warning ("created directory :: " + $directory);
+        }
+    }
+    return $directory;
+}
+proc string get.Base_Directory (){
+    // Get The Current User Directory
+    string $home = `getenv "HOME"`;
+    // Set presistent data directory name
+    string $data = "DmlDX_Data";
+	// Get The project directory name
+    string $project = `workspace -q -shortName`;
+    // Get The Current Name of Open Scene
+    string $scene =  `file -q -sceneName -shortName`;
+    // Check if scene has a name
+    // if it has not been saved
+    // then the value will be empty
+    if(!`size $scene`){
+    	// if the scene has not been saved
+        // set the scene varable to default
+        // and warn the user
+    	warning -sl 1 "The currently open scene has not been saved Data will be saved to default directory\n";
+        $scene = "default";
+    }
+    // Make the directory path name
+    $path = ($home + "/" + $data + "/" + $project + "/" + $scene + "/" );
+    // Create the directory if needed
+    create.Directory $path;
+    // return the directory path
+    return `toNativePath $path`;
+}
+proc get.Sub_Directorys(string $names[], string $paths[]){
+	$names = {"Transforms", "Groups", "Locators", "Joints", "Meshs", "Assemblies","Xfiles"};
+    clear $paths;
+    string $Base = `getAttr "Dml_DataStorage.DmlDataDirectory"`;
+    for($i=0, $j = `size $names`; $i < $j; $i++){
+    	$paths[$i] = `create.Directory ($Base + $names[$i])`;
+    }
+}
+proc string create.StorageNode(){
+	// variables to store the subdirectory names and paths
+	string $directoryNames[10],$directoryPath[10];
+    // Name of the storage node
+    string $storageNode = "Dml_DataStorage";
+    // check if storageNode exists and that TestMode is On
+    if(`objExists $storageNode`){
+    	if(`get.TestMode`){
+            // for testing reasons delete
+            delete $storageNode;
+        }
+    }
+    // check if storageNode exists
+    if(!`objExists $storageNode`){
+    	//create Dml_DataStorage
+        createNode -skipSelect -name $storageNode "transform";
+    }
+    // check if DmlDataDirectory attribute exists
+    if(!`attributeQuery -exists -node $storageNode "DmlDataDirectory"`){
+    	// create an string attribute that will
+        // hold file path for the
+        // Base data storage directory
+    	addAttr -s 1 -r 1 -w 1 -h 0 -dt "string" -ln "DmlDataDirectory" -sn "dmld" $storageNode;
+    }
+    // sets the value of DmlDataDirectory
+    setAttr -type "string" ($storageNode + ".DmlDataDirectory") `get.Base_Directory`;
+
+    get.Sub_Directorys $directoryNames $directoryPath;
+
+    // check if DmlDataDirectory attribute exists
+    if(!`attributeQuery -exists -node $storageNode "SubDirectorys"`){
+    	// create a compound attribute that will
+        // hold The Sub directory
+        // Attribute names and paths
+    	addAttr -s 1 -r 1 -w 1 -h 0 -attributeType "compound" -nc `size $directoryNames` -ln "SubDirectorys" $storageNode;
+
+		for($i=0; $i < `size $directoryNames`; $i++)
+			addAttr -s 1 -r 1 -w 1 -h 0 -dt "string" -p "SubDirectorys" -ln $directoryNames[$i] $storageNode;
+    }
+
+    for($i=0; $i < `size $directoryNames`; $i++){
+    	setAttr -type "string" ($storageNode + "." + $directoryNames[$i]) $directoryPath[$i];
+	}
+    return $storageNode;
+}
+
+// Polygon Data Fuctions
+
+proc int is.Mesh(string $Mesh){
+    return `objectType -isType "mesh" mesh`)
+
+}
+
+proc int get.FaceCount(string $Mesh){
+	int $faceCount[0];
+    $faceCount = `polyEvaluate -f $Mesh`;
+    return $faceCount[0];
+}
+
+proc IndexWinding(int $winding_order[],string $Mesh){
+	if(`objectType -isType "mesh" mesh`)
+	for($i=0, $add=0; $i < get.FaceCount($Mesh); $i++){
+		//find the  vertex indices used by this face and split the returned string
+		string $split[];
+        `polyInfo -faceToVertex (".f["+$i+"]")`;
+		//add the face number and vertex count for this face to the string
+		int $j,$nIndices = tokenize(match("[^:]+$",stringArrayToString(`polyInfo -fv (".f["+$i+"]")`,"")),$split);
+		for($j in `DML_ReverseRange 0 (size($split)) 1`)
+		{
+			int $index = $split[$j];
+			$winding_order[$add++] = $index;
+		}
+	}
+
+	return $winding_order;
+}
+
+proc DML_VertexPosValues(vector $vertexLocations[])
+{
+    int $add=$i=$j=$k=0;
+    int $PerFace_Count[] = `DML_PerFaceIndexCount`;
+    int $Extraction_Order[] = `DML_ReversedVertexWinding`;
+
+    vector $Location[400];
+
+    for($i in $Extraction_Order )
+    {
+            vector $XYZ = pointPosition (".vtx["+$i+"]");
+
+            $Location[$add++] = $XYZ;
+    }
+    return $Location;
+}
+
+/*global proc START_EXPORT(string $Directory)
+{
+	//Creates A Directory To Save Files Or Clears All Files in Them
+	DML_ClearAllDirectories;
+
+	DML_ExtractoinMatrixs;
+
+	DML_Assemble_Data;
+
+	DML_Construct_Xfile;
+
+	string $file,$filelist[] = `getFileList -folder "C:\\DML_Temp\\ReparsedXfiles\\" -filespec "*.*"`;
+
+	delete(`ls "DX_Extractoin_Set*"`);
+
+	for($file in $filelist)
+    {
+        string $path1 = "C:\\DML_Temp\\ReparsedXfiles\\";
+		sysFile -copy ($Directory+$file) ($path1+$file);
+    }
+
+}

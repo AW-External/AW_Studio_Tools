@@ -1,0 +1,12 @@
+global proc int[] DML_Reverse(int $list[])
+{
+  int $a,$b;
+  
+  int $reverse[];
+  
+  for ($a = (size($list)),$b = 0;$a >0; $a--,$b++)
+  {
+    $reverse[$b] = $list[$a-1];
+  }
+  return $reverse;
+}

@@ -1,0 +1,507 @@
+proc string GetDeph()
+{
+	global string $G_UI_OutPut_Deph;
+	
+	string $output = `radioCollection -q -select $G_UI_OutPut_Deph`;
+	
+	if($output == "")
+	{
+		error "please select an output methade";
+	}
+	
+	return $output;
+}
+
+proc string GetDir()
+{
+	global string $G_UI_Textfield_Current_Directory;
+	
+	string $DirectoryName = `textField -q -text $G_UI_Textfield_Current_Directory`;
+	
+	return $DirectoryName;
+}
+
+proc MeshElements()
+{
+	global string $G_GUI_NORMALS_CHECKBOX,$G_GUI_UV_CHECKBOX,$G_GUI_BINDING_CHECKBOX,$G_GUI_COLORS_CHECKBOX;
+	global int $G_DML_Norms_Check,$G_DML_UV_Check,$G_DML_Bindings_Check,$G_DML_Colors_Check;
+	
+	$G_DML_Norms_Check = `checkBox -q -value $G_GUI_NORMALS_CHECKBOX`;
+	$G_DML_UV_Check = `checkBox -q -value $G_GUI_UV_CHECKBOX`;
+	$G_DML_Bindings_Check = `checkBox -q -value $G_GUI_BINDING_CHECKBOX`;
+	$G_DML_Colors_Check = `checkBox -q -value $G_GUI_COLORS_CHECKBOX`;
+}
+
+proc string GetName()
+{
+	global string $G_UI_Textfield_Current_Name;
+	
+	string $Name = `textField -q -text $G_UI_Textfield_Current_Name`;
+	
+	$Name = match("^[A-Za-z0-9_]+",$Name);
+	
+	return $Name;
+}
+
+proc int GetAnimToggle()
+{
+	global string $G_UI_Activate_Animation_Toggle;
+	
+	if(`checkBox -q -v $G_UI_Activate_Animation_Toggle`)
+		return true;
+	else
+		return false;
+}
+
+proc GetUIAnimationSetArrays (string $Names[], int $Start_Times[], int $End_Times[])
+{
+	global string $G_UI_Animation_Set_Container;
+	
+	clear $Names; clear $Start_Times; clear $End_Times;
+	
+	int $C[],$S[],$E[];
+	
+	clear $C; clear $S; clear $E;
+	
+	string $N[];clear $N;
+	
+	int $j = `rowColumnLayout -q -numberOfChildren $G_UI_Animation_Set_Container`;
+	
+	string $uiChildern[] =`rowColumnLayout -q -childArray $G_UI_Animation_Set_Container`;
+	
+	int $i=$k = 0;
+	
+	while($i<$j)
+	{
+		$C[size($C)] = `checkBox -q -v ($G_UI_Animation_Set_Container+"|"+$uiChildern[$i++])`;
+		
+		if($C[size($C)-1])
+		{
+			$N[size($N)] = `textField -q -tx ($G_UI_Animation_Set_Container+"|"+$uiChildern[$i++])`;
+			
+			$S[size($S)] = `intField -q -v ($G_UI_Animation_Set_Container+"|"+$uiChildern[$i++])`; 
+			
+			$E[size($E)] = `intField -q -v ($G_UI_Animation_Set_Container+"|"+$uiChildern[$i++])`;
+			$k++;
+		}
+		else
+		{
+			$i = $i+3;
+		}
+	}
+	
+	for($i = 0; $i < $k ; $i++)
+	{
+		
+		$Names[size($Names)] = $N[$i];
+		
+		$Start_Times[$i] = $S[$i];
+		
+		$End_Times[$i] = $E[$i];
+	}
+	
+}
+
+proc dualslash_check()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files,
+		$G_UI_Button_Director_Name,
+		$G_UI_OutPut_Deph;
+	
+	string $check = `textField -q -text $G_UI_Textfield_Current_Directory`;
+	
+	if (`gmatch "//" $check`)
+	{
+		substitute "//" $check "/";
+		
+		textField -e -text $check $G_UI_Textfield_Current_Directory;
+	}
+	
+	string $end = `endString $check 2`;
+	
+	if (`gmatch "//" $end`)
+	{
+		int $size = size($check)-1;
+		textField -e -text (startString($check,$size)) $G_UI_Textfield_Current_Directory;
+	}
+	
+}
+
+proc Refresh()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files,
+		$G_UI_Button_Director_Name,
+		$G_UI_OutPut_Deph;
+	dualslash_check;         
+	//clear the all the items in the folder pannal
+	//
+	textScrollList -e -removeAll $G_UI_TextScrollList_Folders;
+	
+	//Clear the all the files from the file pannal
+	//
+	textScrollList -e -removeAll $G_UI_TextScrollList_Files;
+	
+	string $dir;
+	//get the full path to the currently hilighted foulder from the UI
+	//
+	string $DirectoryName = (`textField -q -text $G_UI_Textfield_Current_Directory `);
+	
+	//if there are no more directory no need to check
+	//
+	if(size(`getFileList -folder $DirectoryName`)!=0)
+	{
+		
+		// scan through all the file in the new directory
+		//
+		for ($dir in `getFileList -folder $DirectoryName `)
+		{   
+			//detereman if the current file is a file or foulder
+			//
+			if (`filetest -d ($DirectoryName+$dir)`)
+			{
+				//if the file is a foulder add it to the foulder pannal
+				//
+				textScrollList -e -append $dir $G_UI_TextScrollList_Folders;
+			}
+			else
+			{   
+				//other wise place it in the file pannal
+				//
+				textScrollList -e -append $dir $G_UI_TextScrollList_Files;
+			}
+		}
+	}
+}
+
+proc New()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files;
+	
+	
+	string $DirectoryName = (`getenv  "HOME"`);
+	
+	$DirectoryName= (`toNativePath $DirectoryName`);
+	
+	textField -e -text `fromNativePath $DirectoryName` $G_UI_Textfield_Current_Directory;
+	Refresh;
+}
+
+proc Save()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files,
+		$G_UI_Button_Director_Name,
+		$G_UI_OutPut_Deph,
+		$G_UI_M_Checks[];
+	
+	global string $G_GUI_NORMALS_CHECKBOX,$G_GUI_UV_CHECKBOX,$G_GUI_BINDING_CHECKBOX,$G_GUI_COLORS_CHECKBOX;
+	
+	optionVar -stringValue "DML_Deph" `radioCollection -q -select $G_UI_OutPut_Deph`;
+	
+	optionVar -stringValue "DML_DN" `textField -q -text $G_UI_Textfield_Current_Directory`;
+	
+	optionVar -stringValue "DML_FN" `textField -q -text $G_UI_Textfield_Current_Name`;
+	
+	if (`optionVar -exists "DML_Mesh_Ops"`)
+		optionVar -clearArray "DML_Mesh_Ops";
+	
+	optionVar -intValue "DML_Mesh_Ops" `checkBox -q -value $G_GUI_NORMALS_CHECKBOX`;
+	
+	optionVar -intValueAppend "DML_Mesh_Ops" `checkBox -q -value $G_GUI_UV_CHECKBOX`;
+	
+	optionVar -intValueAppend "DML_Mesh_Ops" `checkBox -q -value $G_GUI_BINDING_CHECKBOX`;
+	
+	optionVar -intValueAppend "DML_Mesh_Ops" `checkBox -q -value $G_GUI_COLORS_CHECKBOX`;
+}
+
+proc Defalult()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files,
+		$G_UI_Button_Director_Name,
+		$G_UI_OutPut_Deph,
+		$G_UI_M_Checks[];
+	
+	global string $G_GUI_NORMALS_CHECKBOX,$G_GUI_UV_CHECKBOX,$G_GUI_BINDING_CHECKBOX,$G_GUI_COLORS_CHECKBOX;
+	
+	radioCollection -e -select "Full" $G_UI_OutPut_Deph;
+	
+	textField -e -text `workspace  -q -rootDirectory` $G_UI_Textfield_Current_Directory;
+	
+	textField -e -text `file -q -location -sceneName` $G_UI_Textfield_Current_Name;
+	
+	checkBox -e -value 1 $G_GUI_NORMALS_CHECKBOX;
+	checkBox -e -value 1 $G_GUI_UV_CHECKBOX;
+	checkBox -e -value 0 $G_GUI_BINDING_CHECKBOX;
+	checkBox -e -value 0 $G_GUI_COLORS_CHECKBOX;
+	dualslash_check;          
+}
+
+proc Load()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files,
+		$G_UI_Button_Director_Name,
+		$G_UI_OutPut_Deph;
+	
+	global string $G_GUI_NORMALS_CHECKBOX,$G_GUI_UV_CHECKBOX,$G_GUI_BINDING_CHECKBOX,$G_GUI_COLORS_CHECKBOX;
+	
+	if((`optionVar -exists "DML_Deph"`)&&(`optionVar -exists "DML_DN"`)&&(`optionVar -exists "DML_FN"`)&&(`optionVar -exists "DML_Mesh_Ops"`))
+	{
+		radioCollection -e -select `optionVar -query "DML_Deph"` $G_UI_OutPut_Deph;
+		textField -e -text `optionVar -query "DML_DN"` $G_UI_Textfield_Current_Directory;
+		textField -e -text `optionVar -query "DML_FN"` $G_UI_Textfield_Current_Name;
+		
+		int $MOps[] = `optionVar -query "DML_Mesh_Ops"`;
+		checkBox -e -value $MOps[0] $G_GUI_NORMALS_CHECKBOX;
+		checkBox -e -value $MOps[1] $G_GUI_UV_CHECKBOX;
+		checkBox -e -value $MOps[2] $G_GUI_BINDING_CHECKBOX;
+		checkBox -e -value $MOps[3] $G_GUI_COLORS_CHECKBOX;
+	}
+	else
+	{
+		Defalult;
+	}
+	Refresh;
+}
+
+proc Reset()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files,
+		$G_UI_Button_Director_Name,
+		$G_UI_OutPut_Deph;
+	Defalult;
+	Save;
+}
+
+proc Namechange()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files,
+		$G_UI_Button_Director_Name,
+		$G_UI_OutPut_Deph;
+	
+	string $GetName[] = `textScrollList -q -selectItem $G_UI_TextScrollList_Files`;
+	
+	string $ext = ("."+`match "[a-z_A-Z]+$" $GetName[0]`);
+	
+	string $SetName = (basename($GetName[0],$ext)+".x");
+	
+	textField -e -text $SetName $G_UI_Textfield_Current_Name;
+	
+}
+
+proc files()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files,
+		$G_UI_Button_Director_Name,
+		$G_UI_OutPut_Deph;
+	
+	//get the the hilited directory from the UI
+	//              
+	string $sl[] = `textScrollList -q -selectItem $G_UI_TextScrollList_Folders`;
+	
+	// get the full path to the curently hilited directory
+	//
+	string $DirectoryName = `textField -q -text $G_UI_Textfield_Current_Directory`;
+	
+	//combine the the two to get the directoy to check for new files
+	//
+	string $DirectoryName  = ($DirectoryName+"/"+$sl[0]+"/");
+	
+	//clear the files that are currently in the text box
+	//    
+	textScrollList -e -removeAll $G_UI_TextScrollList_Files;
+	
+	//retrive the list of files that are in the new dir
+	//
+	string $files[] = `getFileList -folder $DirectoryName`;
+	
+	//scan through all the files
+	// 
+	for ($dir in $files)
+	{   
+		//if we find a folder ignore it 
+		//
+		if (`filetest -d ($DirectoryName+$dir)`==0)
+		{
+			//if we find a file add it to the new list
+			//
+			textScrollList -e -append $dir $G_UI_TextScrollList_Files;
+		}
+	}
+}
+
+proc back()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files;
+	
+	//get the currently hilighted foulder from the UI
+	//
+	string $sl[] = `textScrollList -q -selectItem $G_UI_TextScrollList_Folders`;
+	
+	//get the full path to the currently hilighted foulder from the UI
+	//
+	string $DirectoryName = (`textField -q -text $G_UI_Textfield_Current_Directory `);
+	
+	string $buffer[];
+	
+	string $newdir = "";
+	
+	int $i=$numTokens=0;
+	
+	$numTokens = `tokenize $DirectoryName "/" $buffer`;
+	
+	while ($i < ($numTokens-1) )
+	{
+		$newdir += ($buffer[$i++]+"/");        
+	}
+	
+	//update the directy text to reflect the new foulder
+	//
+	textField -e -text $newdir $G_UI_Textfield_Current_Directory;
+	dualslash_check;
+	Refresh;
+}
+
+proc Dir()
+{
+	global string $G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files;
+	
+	//get the currently hilighted foulder from the UI
+	//
+	string $sl[] = `textScrollList -q -selectItem $G_UI_TextScrollList_Folders`;
+	
+	//get the full path to the currently hilighted foulder from the UI
+	//
+	string $DirectoryName = (`textField -q -text $G_UI_Textfield_Current_Directory `+$sl[0]+"/");
+	
+	//update the directy text to reflect the new foulder
+	//
+	textField -e -text $DirectoryName $G_UI_Textfield_Current_Directory;
+	Refresh;
+}
+
+proc Export()
+{
+	global int $G_DX_SPACE,$G_DML_Norms_Check,$G_DML_UV_Check,$G_DML_Bindings_Check,$G_DML_Colors_Check;;
+	
+	MeshElements;
+	
+	//string $File = (`GetName`+".x");
+		
+	string $Dir = `GetDir`;
+	
+	//string $FileName = (`GetDir`+`GetName`+".x");
+	
+	//string $AnimName = (`GetDir`+`GetName`+".x");
+	
+	//string $OutputType = `GetDeph`;
+	
+	//if($OutputType == "Full")
+	//{
+	//	$G_DX_SPACE = 0;
+	//}
+	//else
+	//{
+	//	$G_DX_SPACE = 1;
+	//}
+	
+	//int $Animation = `GetAnimToggle`;	
+	
+	//int $templets = 0;
+	
+	//int $Start_Times[],$Ends_Times[];
+	
+	//string $AnimationSets[];
+	
+	//GetUIAnimationSetArrays($AnimationSets,$Start_Times,$Ends_Times);
+	
+	START_EXPORT($Dir);
+}
+
+global proc DML_GUI_COMMANDS (string $Command)
+{
+	switch($Command)
+	{
+	case "Dir":
+		Dir;
+		dualslash_check;
+		break;
+		
+	case "Load":
+		Load;
+		dualslash_check;
+		break;
+		
+	case "click":
+		files;
+		dualslash_check;
+		break;
+		
+	case "dubbleclick":
+		Dir;
+		break;
+		
+	case "Directory_Search":
+		fileBrowserDialog -mode 4 -fileCommand "DML_GUI_FIND_DIRECTORY " -fileType "directory" -actionName "" -om "open";
+		dualslash_check;
+		break;
+		
+	case "Save":
+		Save;
+		break;
+		
+	case "Reset":
+		Reset;
+		break;
+		
+	case "Defalult":
+		Defalult;
+		Dir;
+		break;
+		
+	case "Namechange":
+		Namechange;
+		break;
+		
+	case "back":
+		back;
+		break;
+		
+	case "Export":
+		Export;
+		break;
+		
+	}
+	
+}

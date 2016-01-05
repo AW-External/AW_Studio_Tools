@@ -1,0 +1,127 @@
+global proc string[] ALL_SHADERS() 
+{
+	global int $D3DX_OUTPUT_FILE;
+    string $return[];
+
+    int $i = $b = $add = 0;
+
+    //GET A LIST OF ALL THE SHADERS
+    string $Material_List[] = sort(`ls -type "lambert"`);
+    string $Material_List2[];
+    int $shader_Count = (`size($Material_List)`);
+   
+    //CREATE 4 DIFFERENT FLOAT ARRAYS (RED GREEN BLUE & ALPHA) THAT WILL HOLD THERE COLOR FOR EACH SHADER
+    float $R_Color[],$G_Color[],$B_Color[],$Alpha[];
+    
+    //CREATE FLOAT ARRAY FOR THE SPECULAR HIGHLIGHT SHARPNESS
+    float $Specular_Power[];
+    
+    //CREATE 3 DIFFERENT FLOAT ARRAYS THAT WILL HOLD THERE SPECULAR COLOR FOR EACH SHADER
+    float $R_Specular[],$G_Specular[],$B_Specular[];
+    
+    //CREATE 3 DIFFERENT FLOAT ARRAYS THAT WILL HOLD THERE EMISSIVE COLOR FOR EACH SHADER
+    float $R_Emissive[],$G_Emissive[],$B_Emissive[];
+    
+    //CREATE A STRINGARRAY THAT WILL HOLD ANY POSSABLE TEXTURE FILE PATHS
+    string $File_Path[];
+    
+    //CREATE A STRINGARRAY THAT WILL HOLD ONLY THE FILE NAME OF EACH PATH
+    string $File_Name[]; 
+    
+    for($i = 0;$i<$shader_Count;$i++)
+    {
+            $Material_List2[$i] = $Material_List[$i];
+    }
+         
+    //SCAN THROUGH ALL THE SHADERS AND RECORD THERE VALUES
+    for($i = 0;$i<$shader_Count;$i++)
+    {
+        $R_Color[$i]= `getAttr ($Material_List[$i]+".colorR")`;
+        $G_Color[$i]= `getAttr ($Material_List[$i]+".colorG")`;
+        $B_Color[$i]= `getAttr ($Material_List[$i]+".colorB")`;
+        
+        float $alpha[] = `getAttr ($Material_List[$i]+".transparency")`;
+        
+        $Alpha[$i] = (($alpha[0]+$alpha[1]+$alpha[2])/3);
+
+        $R_Emissive[$i] = `getAttr ($Material_List[$i]+".ambientColorR")`;
+        $G_Emissive[$i] = `getAttr ($Material_List[$i]+".ambientColorG")`;
+        $B_Emissive[$i] = `getAttr ($Material_List[$i]+".ambientColorB")`;
+
+        if (`attributeExists "specularColor" $Material_List[$i]`)
+        {
+            $R_Specular[$i] = `getAttr ($Material_List[$i]+".specularColorR")`;
+            $G_Specular[$i] = `getAttr ($Material_List[$i]+".specularColorG")`;
+            $B_Specular[$i] = `getAttr ($Material_List[$i]+".specularColorB")`;
+        
+            if (`attributeExists "cosinePower" $Material_List[$i]`)
+            {
+                $Specular_Power[$i] = `getAttr ($Material_List[$i]+".cosinePower")`;
+            }
+            else if (`attributeExists "roughness" $Material_List[$i]`)
+            {
+                $Specular_Power[$i] = `getAttr ($Material_List[$i]+".roughness")`;
+            }
+            else
+            {
+                $Specular_Power[$i] = 0.0;
+            }
+        }
+        else
+        {
+            $R_Specular[$i] = 0.0;
+            $G_Specular[$i] = 0.0;
+            $B_Specular[$i] = 0.0;
+            $Specular_Power[$i] = 0.0;
+        }
+        
+        //DETERMAIN WEATHER OR NOT A COLOR FILE EXISTS
+        string $File_Node = stringArrayToString(`defaultNavigation -defaultTraversal -destination ($Material_List[$i]+".color")`,"");
+
+        if ($File_Node!="")
+        {
+            $File_Path[$i] = getAttr( $File_Node+".fileTextureName" );
+            
+            //SHORTEN FULL PATH TO JUST THE FILENAME AND EXT
+            string $exe = fileExtension( $File_Path[$i] );
+            string $base = basenameEx( $File_Path[$i] );
+            
+            $File_Name[$i] = ($base+"."+$exe);
+            $R_Color[$i] = 1.0;
+            $G_Color[$i] = 1.0;
+            $B_Color[$i] = 1.0;
+        }
+        else
+        {
+            $File_Name[$i] = ("");
+        }
+    }
+    
+    //COMPILE SHADER INFORMATION FOR EACH SHADER ID INTO STRING ARRAY
+    //WITH PROPER DIRECT X FORMATING.
+    string $Q = "\"";
+    $return[`size $return`] = "##SceneMaterials";
+    
+    for($i = 0;$i<$shader_Count;$i++)
+    {
+        $return[`size $return`] = ("Material "+$Material_List2[$i]);
+        
+        $return[`size $return`] = ("       {");
+
+        $return[`size $return`] =(`DML_FloatToString $R_Color[$i]`+";"+`DML_FloatToString $G_Color[$i]`+";"+`DML_FloatToString $B_Color[$i]`+";"+`DML_FloatToString $Alpha[$i]`+";;");
+
+        $return[`size $return`] = (`DML_FloatToString $Specular_Power[$i]`+";");
+
+        $return[`size $return`] = (`DML_FloatToString $R_Specular[$i]`+";"+`DML_FloatToString $G_Specular[$i]`+";"+`DML_FloatToString $B_Specular[$i]`+";;");
+
+        $return[`size $return`] = (`DML_FloatToString $R_Emissive[$i]`+";"+`DML_FloatToString $G_Emissive[$i]`+";"+`DML_FloatToString $B_Emissive[$i]`+";;");
+
+        $return[`size $return`] ="TextureFileName";
+
+        $return[`size $return`] = ("{ "+$Q+$File_Name[$i]+$Q+" ;}");
+
+        $return[`size $return`] = ("}");
+    }
+    $return[`size $return`] = "##SceneMaterials\n";
+    return $return;
+}

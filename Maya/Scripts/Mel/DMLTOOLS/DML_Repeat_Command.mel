@@ -1,0 +1,10 @@
+// General time saver for The Printout prossess
+global proc DML_Repeat_Command(string $cmdName, int $n){
+    int $j = 0;
+    
+    for ($j = 0; $j < $n; $j++) { 
+    
+        eval($cmdName);
+        
+    }
+}

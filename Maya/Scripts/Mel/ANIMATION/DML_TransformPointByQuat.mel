@@ -1,0 +1,28 @@
+// Transform a point by a quaternion
+global proc vector DML_TransformPointByQuat(vector $point, float $Quat[])
+{
+	float $quatx = $Quat[0];
+	float $quaty = $Quat[1];
+	float $quatz = $Quat[2];
+	float $quatw = $Quat[3];
+	float $pointx = $point.x;
+	float $pointy = $point.y;
+	float $pointz = $point.z;
+	
+	float $quatw2 = $quatw*2;
+	float $tempX, $tempY, $tempZ;
+	
+	float $s2minusv2 = ($quatw*$quatw) - ($quatx*$quatx) - ($quaty*$quaty) - ($quatz*$quatz);
+	float $vDotPtimes2 = 2 * (($quatx*$pointx) + ($quaty*$pointy) + ($quatz*$pointz));
+	
+	$tempX = ($s2minusv2 * $pointx) + ($vDotPtimes2 * $quatx);
+	$tempY = ($s2minusv2 * $pointy) + ($vDotPtimes2 * $quaty);
+	$tempZ = ($s2minusv2 * $pointz) + ($vDotPtimes2 * $quatz);
+	
+	$tempX = ($tempX + $quatw2*($quaty*$pointz - $quatz*$pointy));
+	$tempY = ($tempY + $quatw2*($quatz*$pointx - $quatx*$pointz));
+	$tempZ = ($tempZ + $quatw2*($quatx*$pointy - $quaty*$pointx));
+	
+	vector $result = << $tempX, $tempY, $tempZ >>;
+	return $result;
+}

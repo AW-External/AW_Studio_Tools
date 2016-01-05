@@ -1,0 +1,26 @@
+global proc int DML_FindSkinClustersFromHistroy (string $obj, string $Skins[])
+{
+    clear $Skins;
+    
+    // GET THE HISTORY OF THE Obj
+    //
+    string $H,$History[] = `listHistory  -pruneDagObjects 1 -interestLevel 2 $obj`;
+    
+    // Search For Skinning Modifiers
+    //
+    for ($H in $History)
+    {
+        // Determan What kind Of History Node it is
+        //
+        string $type = `nodeType $H`;
+        
+        if (`gmatch $type "skinCluster"`)
+        {
+            // ADD IT TO A COLLECTION
+            //
+            $Skins[`size $Skins`] = $H;
+        }
+    }
+    
+    return `size $Skins`;
+}

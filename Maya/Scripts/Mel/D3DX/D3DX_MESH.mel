@@ -1,0 +1,328 @@
+proc string CompShader(string $component)
+{
+	// FIND THE SHAPE NODE
+	//
+	string $shape[] = `listRelatives -parent $component`;
+	
+	// FIND THE SHADING ENGINE
+	//
+	string $connections[] = `listConnections -source false -type "shadingEngine" $shape[0]`;
+	
+	// THERE MAY BE MORE THAN ONE SHADING GROUP CONNECTED TO THE
+	// GEOMETRY SO FIND THE EXACT ONE
+	//
+	$connections = `stringArrayRemoveDuplicates $connections`;
+	
+	//SHADINGGROUP ATTACHED TO COMPONENT
+	//
+	string $shadingGroup;
+	
+	//SHADER ATTACHED TO COMPONENT VIA SHADINGGROUP
+	//
+	string $shader[];
+	
+	for ($connection in $connections)
+	{
+		int $result = `sets -isMember $connection $component`;
+		
+		if ($result == 1)
+		{
+			$shadingGroup = $connection;
+		}
+	}
+	
+	// IF NO SHADING GROUP HAS BEEN FOUND, THE COMPONENTS MUST NOT BE
+	// MAPPED - THIS MEANS THE SHAPE IS MAPPED
+	//
+	if ($shadingGroup == "")
+	{
+		for ($connection in $connections)
+		{
+			int $result = `sets -isMember $connection $shape[0]`;
+			if ($result == 1) 
+				$shadingGroup = $connection;
+		}
+	}
+	
+	if ($shadingGroup != "")
+	{
+		// FIND THE SHADER CONNECTED TO THE SHADING GROUP
+		//
+		string $shaderConnection = `connectionInfo -sourceFromDestination ($shadingGroup + ".surfaceShader")`;
+		
+		tokenize $shaderConnection "." $shader;
+		
+	}
+	else
+		error ("getCompShader: no shader found for " + $component + ".");
+	
+	return $shader[0];
+}
+
+proc string[] SHADER_LIST()
+{
+	//REGESTER THE FACE'S FOR THE THE OBJECT WE ARE INTERESTED IN
+	//
+	string $Meshfaces[] =  `ls -flatten ".f[*]"`;
+	
+	string $shaders[];
+	
+	string $return[];
+	
+	int $face_count = DML_EvaluatePoly("f");
+	
+	//MAKE A GLOBAL VAR FOR THE IDS
+	//
+	int $ids[];
+	
+	//MAKE A STRINGARRAY TO
+	//STUFF THE RESULTS INTO
+	//
+	int $ids[];
+	
+	int $i = $b = $add = 0;
+	
+	//GET A LIST OF ALL THE CONNECTED SHADERS
+	//
+	for ($i = 0;$i<$face_count;$i++)
+		$shaders[$add++] = `CompShader (".f["+$i+"]")`;
+	
+	//clean it up
+	//
+	$shaders = `stringArrayRemoveDuplicates $shaders`;
+	
+	string $shader;
+	
+	$i=0;
+	
+	$return[$i++] = "##StartSharderset";
+	
+	for ($shader in $shaders)
+		$return[$i++] =  ("{"+$shader+"}");
+
+	$return[$i++] = "##EndSharderset";
+			
+	return $return;
+}
+
+proc string[] CONNECTED_IDS ()
+{
+	string $selected = `DML_FirstSelected`;
+	
+	string $selectedShape = `DML_GetShape`;
+	
+	//REGESTER THE FACE'S FOR THE THE OBJECT WE ARE INTERESTED IN
+	//
+	string $Meshfaces[] =  DML_ComponetList ("f");
+	
+	string $output[];
+	
+	int $ids[];
+	
+	string $shaders[];
+	
+	int $i,$add = 0;
+
+	int $face_count = DML_EvaluatePoly ("f");
+	
+	//MAKE A STRINGARRAY TO STUFF THE RESULTS INTO
+	//
+	int $ids[];
+	
+	int $i = $b = $add = 0;
+	string $shaders[];
+	
+	//GET A LIST OF ALL THE CONNECTED SHADERS
+	//
+	for ($i = 0;$i<$face_count;$i++)
+	{
+		$shaders[$add++] = `CompShader ($selected+".f["+$i+"]")`;
+	}
+	
+	$shaders = `stringArrayRemoveDuplicates $shaders`;
+	
+	//GET THE TOTAL NUMBER OF SHADERS FOR LATER USE
+	//
+	int $shader_Count = (`size($shaders)`);
+	int $i = $b = $add = 0;
+	
+	//ADD THE TOTAL NUMBER OF SHADERS
+	//WITH PROPER DIRECT X FORMATING
+	//INTO OUTPUT STRINGARRAY
+	//
+	$ids[$add++] = ($shader_Count);
+	
+	//SAME AS ABOVE BUT WITH TOTAL NUMBER OF FACES
+	//
+	$ids[$add++] = ($face_count);
+	
+	//SCAN THROUGH EACH FACE
+	//FOR THE OBJECT OF INTEREST
+	//USING THE $I VARAIBLE AS THE CURRENT FACE NUMBER
+	//
+	for ($i = 0;$i<$face_count;$i++)
+	{
+		//GET THE CURRENT SHADER THAT IS ASSINED TO FACE $i
+		//
+		string $shaderperface = ` CompShader ($selected+".f["+$i+"]")`;
+		
+		//USING THE SHADER COUNT WE MADE EARLER
+		//DETERMAN WITCH ONE IT BELONGS TO 0
+		//BING THE FIRST SO FORTH AND SO ON
+		//THIS WITH BE CONSISTENT WITH THE
+		//ORDER IN WITCH THE SHADERS ARE OUTPUT
+		//IN THE FINALE DIRECT X FILE
+		//
+		for ($b = 0;$b<$shader_Count;$b++)
+		{
+			//COMPARE SHADER(##)
+			//TO THE THE SHADER ASSINED TO FACE(##)
+			//
+			if ($shaderperface == $shaders[$b])
+			{
+				//IF A MATCH IS FOUND
+				//ADD THE NUMBER OF TIMES WE
+				//HAD TO CHECK TO THE STRING ARRAY
+				//
+				$ids[$add++] = ($b);
+			}
+		}
+	}
+	for($i = 0; $i <(`size $ids`); $i++)
+	{
+		if(($i==0)||($i==1)||($i==(`size $ids`-1)))
+			$output[$i] = ($ids[$i]+";");
+		else
+			$output[$i] = ($ids[$i]+",");
+	}
+	return $output;
+}
+
+
+proc string[] Perface_Vert_Count()
+{
+	//Face Count
+	int $i,$j,$k,$faceCount[] = `polyEvaluate -f`;
+	
+	string $winding[];
+	
+	//process each face to find some info about it
+	//
+	for($k=0,$j=0,$i=0;$i<$faceCount[0];$i++,$j=0)
+	{
+		int $VertPerface = size(ls("-flatten",(polyListComponentConversion("-fromFace","-toVertex",(".f["+$i+"]")))));
+		
+		string $winding_order = ($VertPerface+";");
+		
+		while($j < ($VertPerface-1))
+		{
+			$winding_order += (($k++)+",");
+			$j++;
+		}
+		
+		if($i==($faceCount[0]-1))
+		{
+			$winding_order += (($k++)+";;");
+		}
+		else
+		{
+			$winding_order += (($k++)+";,");
+		}
+		
+		$winding[`size $winding`] = $winding_order;
+	}
+	
+	return $winding;
+}
+
+global proc D3DX_MESH()
+{
+	int $faceCount[] = `polyEvaluate -f`;
+	string $Color[],$UVs[],$Normals[],$Vertices[];
+	int $i=$add=0;
+	for( $i=0;$i<$faceCount[0];$i++)
+	{
+		//find the vertex indices used by this face and split the returned string
+		//
+		string $split[]; 
+		//add the face number and vertex count for this face to the string
+		//
+		int $j,$nIndices = tokenize(match("[^:]+$",stringArrayToString(`polyInfo -fv (".f["+$i+"]")`,"")),$split);
+		
+		for($j in `DML_ReverseRange 0 (size($split)) 1`)
+		{
+			
+			float $XYZ[] = `pointPosition -w (".vtx["+$split[$j]+"]")`;
+			
+			float $Norms[] = `polyNormalPerVertex -query -normalXYZ (".vtxFace["+$split[$j]+"]["+$i+"]")`;
+			
+			string $UVS[] = (ls("-flatten",(polyListComponentConversion("-fromVertexFace","-toUV",(".vtxFace["+$split[$j]+"]["+$i+"]")))));
+			float $UV[] = `polyEditUV -q $UVS[0]`;
+			
+			float $color[] = `polyColorPerVertex -q -colorRGB (".vtxFace["+$split[$j]+"]["+$i+"]")`;
+			float $alpha[] = `polyColorPerVertex -q -alpha (".vtxFace["+$split[$j]+"]["+$i+"]")`;
+			
+			$Vertices[$add] = ( (DML_FloatToString($XYZ[0])) + ";" + (DML_FloatToString($XYZ[1])) + ";" + (DML_FloatToString($XYZ[2]*-1)) + ";,");
+						
+			$Normals[$add] = ((DML_FloatToString($Norms[0])) + ";" + (DML_FloatToString($Norms[1])) + ";" + ((DML_FloatToString ($Norms[2]*-1)) + ";,"));
+			
+			$UVs[$add] = (((DML_FloatToString($UV[0])) + ";" + (DML_FloatToString($UV[1])) + ";,"));
+			
+			$Color[$add] = (($add+";"+(DML_FloatToString($color[0])) + ";" + (DML_FloatToString($color[1])) + ";" + (DML_FloatToString($color[2])) + ";" + (DML_FloatToString($alpha[0])) + ";;,"));
+			
+			$add++;
+		}
+	}
+	
+	$add--;
+	
+	$Vertices[($add)] = (startString(($Vertices[($add)]),((size($Vertices[($add)])-1)))+";");
+	
+	$Normals[($add)] = (startString(($Normals[($add)]),((size($Normals[($add)])-1)))+";");
+	
+	$UVs[($add)] = (startString(($UVs[($add)]),((size($UVs[($add)])-1)))+";");
+	
+	$Color[($add)] = (startString(($Color[($add)]),((size($Color[($add)])-1)))+";");
+	
+	string $Indexing[] = `Perface_Vert_Count`;
+	
+	string $Materal_ids[] = `CONNECTED_IDS`;
+	
+	string $Shaders[] = `SHADER_LIST`;
+	
+	string $MeshName = DML_PureName(`DML_GetShape`);
+	
+	D3DX_FRAME;
+		
+	FPRINT_ITEM_WITH_TAB ("Mesh "+$MeshName+" {");
+	
+	FPRINT_ITEM_WITH_TAB (`size $Vertices`+";");
+	FPRINT_ITEMS_WITH_TAB $Vertices;
+	FPRINT_ITEM_WITH_TAB (`size $Indexing`+";");
+	FPRINT_ITEMS_WITH_TAB $Indexing;
+	
+	FPRINT_ITEM_WITH_TAB  ("MeshNormals {");
+	FPRINT_ITEM_WITH_TAB  (`size $Normals` + ";");
+	FPRINT_ITEMS_WITH_TAB ($Normals);
+	FPRINT_ITEM_WITH_TAB  (`size $Indexing` + ";");
+	FPRINT_ITEMS_WITH_TAB ($Indexing);
+	FPRINT_ITEM_WITH_TAB  ("}");
+	
+	FPRINT_ITEM_WITH_TAB  ("MeshTextureCoords {");
+	FPRINT_ITEM_WITH_TAB  (`size $UVs` + ";");
+	FPRINT_ITEMS_WITH_TAB ($UVs);
+	FPRINT_ITEM_WITH_TAB  ("}");
+	
+	//FPRINT_ITEM_WITH_TAB  ("MeshVertexColors {");
+	//FPRINT_ITEM_WITH_TAB  (`size $Color` + ";");
+	//FPRINT_ITEMS_WITH_TAB ($Color);
+	//FPRINT_ITEM_WITH_TAB  ("}");
+	
+	FPRINT_ITEM_WITH_TAB  ("MeshMaterialList {");
+	FPRINT_ITEMS_WITH_TAB ($Materal_ids);
+	FPRINT_ITEMS_WITH_TAB ($Shaders);
+	FPRINT_ITEM_WITH_TAB  ("}");
+	
+	FPRINT_ITEM_WITH_TAB ("}");
+}
+

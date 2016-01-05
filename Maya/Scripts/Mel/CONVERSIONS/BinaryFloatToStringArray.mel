@@ -1,0 +1,128 @@
+global proc int BinaryFloatToStringArray(string $StringArray[], float $FloatArray[],string $range, string $ClearSwitchs)
+{
+	int $id = 0;
+	
+	if(`match ":" $range`==":")
+	{
+		int $Start = StringToInt(`match"^[0-9]+" $range`);
+		
+		int $End = StringToInt(`match "[0-9]+$" $range`);
+		
+		int $Clearfloat = StringToInt(`match"^[0-9]+" $ClearSwitchs`);
+		
+		int $ClearString = StringToInt(`match "[0-9]+$" $ClearSwitchs`);
+			
+		if((!$Start)&&(!$End))
+		{
+			$End = `size $FloatArray`;
+		}
+		
+		if($Start>$End)
+		{
+			error ("Start Value is Larger Than The End Value\n");
+			return 0;
+		}
+		else if(!`size $FloatArray`)
+		{
+			warning ("BinaryFloatToStringArray input Array Was Empty\n");
+			return 0;
+		}
+		$id = `fopen "C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt" "w"`;
+		
+		if(!$id)
+		{
+			error ("Was Unable To Open The File C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt For Writing\n");
+		}
+		else
+		{
+			int $i = $Start;
+			
+			while($i<$End)
+			{
+				fwrite $id ($FloatArray[$i++]);
+			}
+		}
+		
+		if(!`fclose $id`)
+		{
+			float $FloatHolder[] = $FloatArray;
+			
+			if($Clearfloat)
+			{
+				clear $FloatArray;
+			
+				int $i = 0;
+			
+				while($i<$Start)
+				{
+					$FloatArray[$i] = ($FloatHolder[$i++]);
+				}
+			
+				int $j = $End;
+			
+				while($j<`size $FloatHolder`)
+				{
+					$FloatArray[$i++] = ($FloatHolder[$j++]);
+				}
+			}
+		}
+		else
+		{
+			error ("Was Unable To Close C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt\n");
+		}
+
+		$id = `fopen "C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt" "r"`;
+		
+		if(!$id)
+		{
+			error ("Was Unable To Open The File C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt For Reading\n");
+		}
+		else
+		{
+			if($Clearfloat)
+			{
+				clear $StringArray;
+			}
+			int $i = 0;
+			
+			int $add = `size $StringArray`;
+			
+			string $s;
+			
+			float $f;
+			
+			int $nValues = ($End - $Start);
+			
+			for($i = 0;$i<$nValues;$i++)
+			{
+				$s = `fread $id $f`;
+				
+				if(`match "[\.]" $s` == ".")
+				{
+					if(`match "e" $s` == "e")
+					{
+						$s = ("0.0");
+					}
+				}
+				else
+				{
+					if(`match "e" $s` == "e")
+					{
+						$s =  ("0.0");
+					}
+					else
+					{
+						$s += (".0");
+					}
+				}
+				$StringArray[$add++] = $s;
+			}
+		}
+		fclose $id;
+	}
+	else
+	{
+		return 0;
+	}
+	return 1;
+}

@@ -1,0 +1,23 @@
+global proc string[] DML_ANIMATED_IK()
+{	
+	string $VisableIk[] = `ls -v -type "ikHandle"`;
+	
+	string $ikHandles[];
+	
+	int $i;
+	
+	//Scan Through All The ikHandles
+	//
+	for($i = 0; $i < `size $VisableIk`; $i++)
+	{
+		//Check To see If The Current Handle Has Animation
+		//
+		if(keyframe("-query","-keyframeCount",$VisableIk[$i]))
+		{
+			//Add it To the Final List
+			//
+			$ikHandles[size($ikHandles)] = $VisableIk[$i];
+		}
+	}
+	return $ikHandles;
+}

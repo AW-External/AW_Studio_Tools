@@ -1,0 +1,137 @@
+proc string[] Retreave()
+{    
+ 
+   string $Name = basename(`file -q -sceneName -shortName`,("."+(fileExtension(`file -q -sceneName -shortName`))));
+    
+    //CURRENTLY WORKING SCENE
+    string $Path = (`workspace -fullName`+"/data/DML_Raw_Data/");
+	
+	$Path = toNativePath($Path+$Name+"/Assembies/");
+    
+    //MAKES SURE THE DIR IS AVALABLE
+    if (`filetest -d $Path`==0)
+    {
+        //IF NOT FOUND MAKE DIRECTORY
+        error ("AssembieNoNs Directory Could not be found");
+    }
+    else
+    {
+        //IF FOUND REMOVE ANY DATA IN DIRECTORY
+        string $filelist[] = `getFileList -folder $Path -filespec "*.txt"`;
+        
+        int $i;
+        
+        for($i in `DML_Range 0 (size($filelist)) 1`)
+        {
+            $filelist[$i] = ($Path+$filelist[$i]);
+        }
+            
+        return $filelist;
+    }
+}
+
+proc Open (string $File)
+{
+    global int $G_ASSem_id;
+    
+    $G_ASSem_id = fopen($File,"r");
+    
+    if(!(size(`fgetline $G_ASSem_id`)))
+    {
+        fclose $G_ASSem_id;
+        error"There Was No Data in The Opened Assembly File";
+    }
+    
+    frewind $G_ASSem_id;
+}
+
+string Read()
+{
+    global int $G_ASSem_id;
+    
+    return `fgetword $G_ASSem_id`;
+}
+
+proc SetPadding()
+{
+	global string $IndentPadding;
+    
+    string $s = `Read_Word_From_Assembly_File`;
+    
+    int $j = $s;
+	
+	int $i = 0;
+	
+	$Padding = "";
+	
+    while($i<$j)
+	{
+		$Padding += ("\t");
+		$i++;
+	}
+}
+
+proc Close()
+{
+    global int $G_ASSem_id;
+    
+    fclose $G_ASSem_id;
+}
+
+proc int EndOf ()
+{
+    global int $G_ASSem_id;
+    
+    if(`feof $G_ASSem_id`)
+    {
+        return no;
+    }
+    else
+    {
+        return yes;
+    }
+}
+
+global proc DML_AssemblyFileOps(string $Args, string $ArgList[])
+{
+	DML_ArgParser $Args $ArgList;
+	
+	switch($ArgList[0])
+	{
+		case "-o":
+			Open_Assembly_File $ArgList;
+			break;
+			
+		case "-m":
+			Make_Raw_Directory $ArgList;
+			break;
+			
+		case "-cr":
+			Clear_Raw_Directory $ArgList;
+			break;
+			
+		case "-cr":
+			Get_Raw_FileList $ArgList;
+			break;
+			
+		case "-cl":
+			Close_Assembly_File;
+			break;
+			
+		case "-r":
+			Read_From_RawFile $ArgList;
+			break;
+			
+		case "-rw":
+			Rewind_RawFile;
+			break;
+			
+		case "-e":
+			End_Of_Assemblyfile $ArgList;
+			break;
+			
+		case "-e":
+			Get_Raw_FileList $ArgList;
+			break;
+	}
+}

@@ -1,0 +1,258 @@
+proc Open_Mesh_File ()
+{
+    global int $G_Mesh_id;
+    
+    string $Name = (DML_PureName(`DML_GetShape`));
+    
+    string $File = "C:/Documents and Settings/Drew Loveridge/My Documents/maya/DML_Extraction_Data/PM_Assets/Cube/Meshs/Mesh.txt" ;
+    
+    $G_Mesh_id = `fopen $File "w"`;
+}
+
+proc Close_Mesh_File()
+{
+    global int $G_Mesh_id;
+    
+    $G_Mesh_id = `fclose $G_Mesh_id`;
+}
+
+proc Write_Mesh_Name()
+{
+    global int $G_Mesh_id;
+    
+    fprint $G_Mesh_id ("Name\n");    
+    fprint $G_Mesh_id (DML_PureName(`DML_GetShape`)+"\n");
+}
+
+proc Index_Printer ()
+{
+    global int $G_Mesh_id;
+    
+    $add=$i=$j=0;
+    
+    int $indices[] = `DML_PerFaceIndexCount`;
+    
+    int $Size = `DML_EvaluatePoly f`;
+    
+    fprint $G_Mesh_id ("Indexing\n");
+        
+    fprint $G_Mesh_id ($Size+"\n");
+    
+    for($i in `DML_Range 0 $Size 1` )
+    {
+        fprint $G_Mesh_id ($indices[$i]+" ");
+        
+        for($j in `DML_Range 0 ($indices[$i]-1) 1`)
+        {
+            fprint $G_Mesh_id (($add++)+" ");
+        }
+        
+        fprint $G_Mesh_id (($add++)+"\n");
+    }
+}
+
+proc Vertex_Printer()
+{
+    global int $G_Mesh_id;
+    
+    $add=$i=0;
+    
+    string $Vertices[] = (DML_HardCodeVectors(`DML_VertexPosValues`));
+    
+    int $Size = (`size $Vertices`/3);
+    
+    fprint $G_Mesh_id ("Vertices\n");
+    
+    fprint $G_Mesh_id ($Size+"\n");
+    
+    for($i in `DML_Range 0 $Size 1` )
+    {
+        fprint $G_Mesh_id ($Vertices[$add++]+" "+$Vertices[$add++]+" "+$Vertices[$add++]+"\n");
+    }
+}
+
+proc Normals_Printer()
+{
+    global int $G_Mesh_id;
+    
+    $add=$i=0;
+    
+    string $Normals[] = (DML_HardCodeVectors(`DML_VertexNormalValues`));
+    
+    int $Size = (`size $Normals`/3);
+    
+    fprint $G_Mesh_id ("Normals\n");
+    
+    fprint $G_Mesh_id ($Size+"\n");
+    
+    for($i in `DML_Range 0 $Size 1` )
+    {
+        fprint $G_Mesh_id ($Normals[$add++]+" "+$Normals[$add++]+" "+$Normals[$add++]+"\n");
+    }
+}
+
+proc Vertex_Color_Printer ()
+{
+    global int $G_Mesh_id;
+    
+    $add=$i=0;
+    
+    string $Vertex_Colors[] = (DML_HardCodefloats(`DML_VertexColorValues`));
+    
+    int $Size = (`size $Vertex_Colors`/4);
+    
+    fprint $G_Mesh_id ("Vertex_Colors\n");
+    
+    fprint $G_Mesh_id ($Size+"\n");
+    
+    for($i in `DML_Range 0 $Size 1`)
+    {
+        fprint $G_Mesh_id ($i+" "+$Vertex_Colors[$add++]+" "+$Vertex_Colors[$add++]+" "+$Vertex_Colors[$add++]+" "+$Vertex_Colors[$add++]+"\n");
+    }
+}
+
+proc UVcoord_Printer ()
+{
+    global int $G_Mesh_id;
+    
+    $add=$i=0;
+    
+    string $Texture_Coords[] = (DML_HardCodefloats(`DML_VertexUvValues`));
+    
+    int $Size = (`size $Texture_Coords`/2);
+    
+    fprint $G_Mesh_id ("Texture_Coords\n");
+            
+    fprint $G_Mesh_id ($Size+"\n");
+    
+    for($i in `DML_Range 0 $Size 1`)
+    {
+        fprint $G_Mesh_id ($Texture_Coords[$add++]+" "+$Texture_Coords[$add++]+"\n");
+    }
+
+}
+
+proc Material_ID_Printer ()
+{
+    global int $G_Mesh_id;
+    
+    $add=$i=0;
+    
+    int $Ids[] = `DML_PerFaceShaderAssinment`;
+    
+    int $Size = (`size $Ids`+2);
+    
+    fprint $G_Mesh_id ("Material_IDs\n");
+    
+    fprint $G_Mesh_id ($Size+"\n");
+    
+    for($i in `DML_Range 0 $Size 1`)
+    {
+        fprint $G_Mesh_id ($Ids[$i]+"\n");
+    }
+}
+
+proc Material_Printer ()
+{
+    global int $G_Mesh_id;
+    
+    $add=$i=0;
+    
+    string $Materials[] = `DML_CompiledShaderValues`;
+    
+    int $Size = (`size $Materials`/13);
+    
+    fprint $G_Mesh_id ("Materials\n");
+    
+    fprint $G_Mesh_id ($Size+"\n");
+    
+    for($i in `DML_Range 0 $Size 1` )
+    {
+        fprint $G_Mesh_id ($Materials[$add++]+"\n");
+        
+        fprint $G_Mesh_id ($Materials[$add++]+" "+$Materials[$add++]+" "+$Materials[$add++]+" "+$Materials[$add++]+"\n");
+        
+        fprint $G_Mesh_id ($Materials[$add++]+"\n");
+        
+        fprint $G_Mesh_id ($Materials[$add++]+" "+$Materials[$add++]+" "+$Materials[$add++]+"\n");
+        
+        fprint $G_Mesh_id ($Materials[$add++]+" "+$Materials[$add++]+" "+$Materials[$add++]+"\n");
+        
+        fprint $G_Mesh_id ($Materials[$add++]+"\n");
+        
+    }
+}
+
+proc SkinWeights_Printer ()
+{
+    global int $G_Mesh_id;
+    
+    string $MultiComplexCompondValues[];
+    string $MultiComplexCompondData = `DML_VertexWeightValues`;
+    
+    tokenize $MultiComplexCompondData ":" $MultiComplexCompondValues;
+    
+    string $JointValues[];
+    tokenize $MultiComplexCompondValues[1] ";" $JointValues;
+    
+    string $IndexCountValues[];
+    tokenize $MultiComplexCompondValues[2] ";" $IndexCountValues;
+    
+    string $CompondIndicingData[];
+    tokenize $MultiComplexCompondValues[3] ";" $CompondIndicingData;
+    
+    string $CompondWeightData[];
+    tokenize $MultiComplexCompondValues[4] ";" $CompondWeightData;
+    
+    string $CompondBindPoseData[];
+    tokenize $MultiComplexCompondValues[5] ";" $CompondBindPoseData;
+    
+    int $i, $Count = `StringToInt $MultiComplexCompondValues[0]`;
+    
+    fprint $G_Mesh_id ("SkinWeights\n");
+    
+    fprint $G_Mesh_id ($Count+"\n");
+    
+    for($i in `DML_Range 0 $Count 1`)
+    {
+        string $IndicingValues[];
+        int $nIndicing = `tokenize $CompondIndicingData[$i] "," $IndicingValues`;
+    
+        string $WeightValues[];
+        int $nWeight = `tokenize $CompondWeightData[$i] "," $WeightValues`;
+    
+        string $BindPoseValues[];
+        int $nPose = `tokenize $CompondBindPoseData[$i] "," $BindPoseValues`;
+        
+        fprint $G_Mesh_id ($JointValues[$i]+"\n");
+        
+        fprint $G_Mesh_id ($IndexCountValues[$i]+"\n");
+        
+        for($i in `DML_Range 0 $nIndicing 1`)
+            fprint $G_Mesh_id ($IndicingValues[$i]+"\n");
+            
+        for($i in `DML_Range 0 $nWeight 1`)
+            fprint $G_Mesh_id ($WeightValues[$i]+"\n");
+            
+        for($i in `DML_Range 1 $nPose 1`)
+            fprint $G_Mesh_id ($BindPoseValues[($i-1)]+" ");
+            
+        fprint $G_Mesh_id ($BindPoseValues[($i)]+"\n");
+    }
+}
+                           
+global proc DML_MakeMeshFile()
+{
+    Open_Mesh_File;
+    Write_Mesh_Name;
+    Vertex_Printer;
+    Index_Printer;
+    Normals_Printer;
+    Index_Printer;
+    Vertex_Color_Printer;
+    UVcoord_Printer;
+    Material_ID_Printer;
+    Material_Printer;
+    SkinWeights_Printer;
+    Close_Mesh_File;
+}

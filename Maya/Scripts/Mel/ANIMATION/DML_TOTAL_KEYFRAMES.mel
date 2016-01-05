@@ -1,0 +1,54 @@
+// Returns The Total Number Of keyframes Rotations 0,Translations 1 or Scale 2
+global proc int DML_TOTAL_KEYFRAMES(int $output, int $Start, int $End)
+{
+	float $x=$y=$z=$KeyCount=0;
+	
+	int $StartKey,$EndKey;
+	
+	switch ($output)
+	{
+	//ROTATION
+	case 0:
+		{
+			$x = keyframe("-at","rx","-time",($Start+":"+$End),"-query","-keyframeCount");
+			$y = keyframe("-at","ry","-time",($Start+":"+$End),"-query","-keyframeCount");
+			$z = keyframe("-at","rz","-time",($Start+":"+$End),"-query","-keyframeCount");
+			$StartKey = `keyframe -at rx -at ry -at rz -time $Start -query -keyframeCount`;
+			$EndKey = `keyframe -at rx -at ry -at rz -time $End -query -keyframeCount`;
+			break;
+		}
+	//SCALE
+	case 1:
+		{
+			$x = keyframe("-at","sx","-time" ,($Start+":"+$End),"-query","-keyframeCount");
+			$y = keyframe("-at","sy","-time" ,($Start+":"+$End),"-query","-keyframeCount");
+			$z = keyframe("-at","sz","-time" ,($Start+":"+$End),"-query","-keyframeCount");
+			$StartKey = `keyframe -at sx -at sy -at sz -time $Start -query -keyframeCount`;
+			$EndKey = `keyframe -at sx -at sy -at sz -time $End -query -keyframeCount`;
+			break;
+		}
+	//TRANSLATION
+	case 2:
+		{
+			$x = keyframe("-at","tx","-time",($Start+":"+$End),"-query","-keyframeCount");
+			$y = keyframe("-at","ty","-time",($Start+":"+$End),"-query","-keyframeCount");
+			$z = keyframe("-at","tz","-time",($Start+":"+$End),"-query","-keyframeCount");
+			$StartKey = `keyframe -at tx -at ty -at tz -time $Start -query -keyframeCount`;
+			$EndKey = `keyframe -at tx -at ty -at tz -time $End -query -keyframeCount`;
+			break;
+		}
+	}
+	
+	$KeyCount = max($x,$KeyCount);
+	$KeyCount = max($y,$KeyCount);
+	$KeyCount = max($z,$KeyCount);
+	
+	if(!$StartKey)
+		$KeyCount++;
+	
+	if(!$EndKey)
+		$KeyCount++;
+	
+	
+	return $KeyCount; 
+}

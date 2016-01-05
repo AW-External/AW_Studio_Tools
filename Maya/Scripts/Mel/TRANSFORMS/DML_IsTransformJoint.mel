@@ -1,0 +1,15 @@
+global proc int DML_IsTransformJoint ()
+{
+    string $MeshTransforms[] =`ls -visible -type joint`;
+                                                        
+    int $i = 0;
+    
+    string $item = DML_FirstSelected();
+    
+    while( $i < size($MeshTransforms) )
+    {
+        if((isSameObject($item,$MeshTransforms[$i++])))
+            return true;
+    }
+    return false;
+}

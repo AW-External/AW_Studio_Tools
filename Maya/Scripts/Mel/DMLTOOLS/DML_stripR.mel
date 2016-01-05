@@ -1,0 +1,18 @@
+global proc string DML_stripR( string $str ) 
+{
+	string $result = $str;
+
+	string $endWS = `match "[ \t\n\r]*$" $result`;
+
+	//	If the result of the match is identical to the argument then that
+	//	means the argument was made up entirely of whitespace characters and
+	//	there is no need to continue.
+	//
+	if ($endWS == $str) return "";
+
+	if ( size( $endWS ) > 0 ) {
+		$result = substring( $result, 1, size( $result ) - size( $endWS ) );
+	}
+	
+	return $result;
+}

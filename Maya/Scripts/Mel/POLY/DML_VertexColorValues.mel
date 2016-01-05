@@ -1,0 +1,26 @@
+global proc float[] DML_VertexColorValues ()
+{
+    int $add=$i=$j=$k=0;
+    int $PerFace_Count[] = `DML_PerFaceIndexCount`;
+    int $Extraction_Order[] = `DML_ReversedVertexWinding`;    
+    float $RGBA[];
+    float $RGB[2];
+    float $A[0];
+
+    for($i in DML_Range(0,(`DML_EvaluatePoly f`),1) )
+    {
+        for($j in `DML_Range 0 $PerFace_Count[$i] 1`)
+        {
+            $RGB = `polyColorPerVertex -q -colorRGB (".vtxFace["+$Extraction_Order[$k]+"]["+$i+"]")`;
+            
+            $A = `polyColorPerVertex -q -alpha (".vtxFace["+$Extraction_Order[$k++]+"]["+$i+"]")`;
+            
+            $RGBA[$add++] = $RGB[0];
+            $RGBA[$add++] = $RGB[1];
+            $RGBA[$add++] = $RGB[2];
+            $RGBA[$add++] = $A[0];
+        }
+    }
+
+    return $RGBA;
+}

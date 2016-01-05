@@ -1,0 +1,11 @@
+global proc int DML_IsLocator (string $Transform)
+{
+    if(`DML_ShapeType $Transform` == "locator")
+    {
+        return yes;
+    }
+    else
+    {
+        return no;
+    }
+}

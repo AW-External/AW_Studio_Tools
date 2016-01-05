@@ -1,0 +1,13 @@
+//------
+//pads a given string with a given character to a given length
+//------
+global proc string PadBefore ( string $string, int $length, string $with )
+{
+	if( `size $string` >= $length ) 
+		return `substring $string 1 $length`;
+		
+	while( `size $string` < $length )
+		$string = $with + $string;
+		
+	return $string;
+}

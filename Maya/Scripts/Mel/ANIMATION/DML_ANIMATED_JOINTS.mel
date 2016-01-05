@@ -1,0 +1,36 @@
+//Get A list Of All The Joints That Have Been Animated
+global proc string[] DML_ANIMATED_JOINTS()
+{
+	string $joint,$joints[],$list[50];
+	
+	string $ik,$ikHandles[] = `DML_ANIMATED_IK`;
+	
+	//Get A list of All The joints in the scene
+	//
+	$list = `ls -type joint`;
+	
+	for ($ik in $ikHandles)
+	{
+		select $ik;
+
+		$list = stringArrayRemove(`DML_IK_CONTROL_CHAIN`,$list);
+	}
+	
+	//Scan Through All The Joints
+	//
+	for($joint in $list)
+	{
+		//Check To see If The Current Joint Has Animation
+		//
+		if(keyframe("-query","-keyframeCount",$joint))
+		{
+			//Add it To the Final List
+			//
+			$joints[size($joints)] = $joint;
+		}
+	}
+	
+	//Outputs A list Off All joints With Animation
+	//
+	return $joints;
+}

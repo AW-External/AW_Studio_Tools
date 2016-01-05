@@ -1,0 +1,37 @@
+global proc string[] DML_HardEdges ()
+{
+    
+    int $a,$b,$c;
+    
+    $Vertex_Faces = `ls -flatten (".vtxFace[*][*]")`;
+
+    string $Vertex_Faces_and_Vertices[];
+    
+    for ($a in DML_Range(0,size($Vertex_Faces),1))
+    {
+	    string $Conversion[] = `polyListComponentConversion -toEdge $Vertex_Faces[$a]`;
+		
+		$Conversion = `ls -flatten $Conversion`;
+
+	    $Info = `polyInfo -edgeToVertex $Conversion`;
+
+	    $Info = strip ($Info);
+
+    	if (`gmatch "Hard" (endString($Info,4))`)
+    	{
+            string $verts[];
+		    $verts[0] = $Vertex_Faces[$a];
+		    appendStringArray($Vertex_Faces_and_Vertices, $verts, 1);
+    	}
+	    else
+	    {
+		    string $verts[0] = `polyListComponentConversion -toVertex $Vertex_Faces[$a]`;
+		
+		    if ((stringArrayContains($verts[0], $Vertex_Faces_and_Vertices)) == 0)
+		    {
+			    //appendStringArray($Vertex_Faces_and_Vertices, $verts, 1);
+		    }
+	    } 
+    }
+    return $Vertex_Faces_and_Vertices;
+}

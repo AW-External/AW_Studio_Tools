@@ -1,0 +1,10 @@
+global proc IMAGECOPY (string $fname,string $fullname){
+	
+	string $destWindows,$destWindows;
+	
+	$destWindows = ("C:\\maya_Temp_Mesh_Data.\\"+$fname);
+	
+	$srcWindows = $fullname;
+
+	sysFile -copy $destWindows $srcWindows;// Windows
+}

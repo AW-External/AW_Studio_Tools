@@ -1,0 +1,5 @@
+global proc string IntToString (int $value)
+{
+    string $newvalue = $value;
+    return $newvalue;
+}

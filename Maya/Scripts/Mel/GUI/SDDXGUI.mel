@@ -1,0 +1,431 @@
+proc string Mesh_List()
+{
+    global string $G_UI_OutPut_Deph;
+            
+    //HOLDS THE LIST OF MESH NAMES
+    string $frame = `frameLayout -height 300 -l "Mesh List" -labelIndent 2 -labelWidth 90 -marginHeight 2 -marginWidth 2 -collapsable 0`;
+        
+        //SCROLL WINDOW FOR THE MESH LIST
+        string $scroll_mod  = `scrollLayout -childResizable 1 "MESH_LIST_SCROLL"`;
+    
+            string $mod = `columnLayout -adjustableColumn true "MESH_LIST_COLUMNS"`;
+    
+            string $mesh;
+        
+            //SCANS THROUGH ALL THE MESH TRANSFOMRS
+            //
+            for ($mesh in `listTransforms "-v -long -type mesh"`)
+            {   
+                //ADDS THE MESH TRANSFORM TO THE SCROLL LIST
+                //
+                nameField -width 250 -object $mesh;
+            }
+        
+            setParent..;
+        setParent..;
+    setParent..;
+    return $frame;
+}
+
+proc string MESH_OPS ()
+{
+    global string $G_GUI_NORMALS_CHECKBOX,$G_GUI_UV_CHECKBOX,$G_GUI_BINDING_CHECKBOX,$G_GUI_COLORS_CHECKBOX;
+    
+    //POLYMESH OPTIONS
+    string $layout = `formLayout "MESH_OPTIONS_FORM"`;
+    
+        //MESH ELEMENTS
+        string $frame = `frameLayout -height 50 -width 390 -label "Mesh elememts" -labelIndent 2 -labelWidth 90 -marginHeight 2 -marginWidth 2 -collapsable 0
+        "Frame"`;
+    
+            //CHECK BOXES
+            rowColumnLayout -numberOfColumns 4;
+    
+            $G_GUI_NORMALS_CHECKBOX = `checkBox -value 1 -label "Normals" "NORMALS"`;
+
+            $G_GUI_UV_CHECKBOX = `checkBox -value 1 -label "UV Coords" "UVS"`;
+    
+            $G_GUI_BINDING_CHECKBOX = `checkBox -value 0 -label "Binding Data" "BINDING"`;
+    
+            $G_GUI_COLORS_CHECKBOX = `checkBox -value 0 -l "Vertex Colors" "COLORS"`;
+            
+            setParent..;
+            
+        setParent..;
+        
+        string $frame2 = `Mesh_List`;
+        
+    setParent..;
+    
+    //LAYOUT
+    formLayout -e
+        -af $frame "top"    10 
+        -af $frame "left"   10
+        -af $frame "right"  10    
+        -an $frame "bottom"
+
+        -ac $frame2 "top"    5 $frame 
+        -af $frame2 "left"   10
+        -af $frame2 "right"  10    
+        -an $frame2 "bottom"  
+        $layout;
+    
+    return $layout;
+}
+
+proc string SETS()
+{
+    global string $G_UI_Animation_Set_Container;
+    
+    string $list;
+    
+    string $returnframe = `frameLayout -labelVisible 0`;
+    
+    string $Layout = `formLayout`;
+    
+        string $Frame1 = `rowColumnLayout -numberOfColumns 4 -columnWidth 1 55 -columnWidth 2 200 -columnWidth 3 40 -columnWidth 4 40 "Lengend"`;
+
+                text -label "Enable" -font "boldLabelFont" "Enable";
+                text -label "Name" -font "boldLabelFont" "Name";
+                text -label "Start" -font "boldLabelFont" "Start";
+                text -label "End" -font "boldLabelFont" "End";
+        
+        setParent..;
+    
+        string $Frame2 = `scrollLayout`;
+    
+            $G_UI_Animation_Set_Container = `rowColumnLayout -numberOfColumns 4  -columnWidth 1 50 -columnWidth 2 200 -columnWidth 3 40 -columnWidth 4 40 -columnAlign 1 "center" "SETS"`;
+    
+	            for($i=0;$i<20;$i++)
+	            { 
+	                checkBox   -label ("");
+                    
+			        textField -enable 1 -text ("Set "+$i);
+                    
+			        intField -enable 1 -value 0 ("Start Frame "+$i);
+                    
+			        intField -enable 1 -value 0 ("End Frame "+$i);
+		        }
+    
+            scrollLayout -e -h 300 $Frame2 ;
+    
+	formLayout -e
+		-af $Frame1 "top"    0
+		-af $Frame1 "left"   0
+		-af $Frame1 "right"  0
+		-an $Frame1 "bottom" 
+        
+		-ac $Frame2 "top"    0 $Frame1
+		-af $Frame2 "left"   0
+		-af $Frame2 "right"  0
+		-af $Frame2 "bottom" 0
+    $Layout;
+    return $returnframe;
+}
+
+proc string ANIMATION_OPS()
+{
+    global string $G_UI_Activate_Animation_Toggle,$G_UI_Animation_Extraction;
+    
+    string $returnframe = `frameLayout -labelVisible 0`;
+    
+        string $Layout = `formLayout`;
+    
+            string $Frame1 = `frameLayout -labelVisible 0`;
+    
+                rowColumnLayout -numberOfColumns 3;
+    
+                    $G_UI_Animation_Extraction = `radioCollection`;
+    
+                    $G_UI_Activate_Animation_Toggle = `checkBox -label Animation`;
+        
+                    radioButton -collection $G_UI_Animation_Extraction -label "Keyed" -enable 1 -align "left" "Keyed";
+        
+                    //radioButton -collection $G_UI_Animation_Extraction -label "Bake" -enable 1 -align "left" "Baked";
+            
+                setParent..;
+            
+            setParent..;
+        
+            string $Frame2 = `SETS`;
+            
+        setParent..;
+    
+	formLayout -e
+		-af $Frame1 "top"    10
+		-af $Frame1 "left"   10
+		-af $Frame1 "right"  10
+		-an $Frame1 "bottom"
+        
+		-ac $Frame2 "top"    10 $Frame1
+		-af $Frame2 "left"   10
+		-af $Frame2 "right"  10
+		-an $Frame2 "bottom"
+    $Layout; 
+    
+    return $returnframe;
+}
+
+proc string NAME ()
+{
+	string $FName = `frameLayout -labelVisible 0`;
+	
+		//string $layout = formLayout("Name");
+		string $icons = (`getenv SDDX`+"GUI/Icons/");
+	
+		//TEXT NAME
+		string $image = `image -width 400 -height 30 -image ($icons+"name.png")`;
+	
+		setParent..;
+	setParent..;
+	
+	return $FName;
+}
+
+proc string DEPH()
+{
+    global string $G_UI_OutPut_Deph;
+    
+    string $layout = `frameLayout -labelVisible 1 "Hiarkey Deph"`;
+    
+        rowColumnLayout -numberOfColumns 3;
+    
+        $G_UI_OutPut_Deph = `radioCollection`;
+    
+        //ALL THE DIFFERENT KINDS OF OUTPUT DEPHS
+        radioButton -label "Full" -align "left" Full;
+        radioButton -label "Flat" -align "left" Flat;
+        
+        setParent..;
+    setParent..;
+    
+    return $layout;
+}
+
+proc string OUTPUT ()
+{
+    global string $G_UI_Button_Director_Name,$G_UI_Textfield_Current_Directory,$G_UI_Textfield_Current_Name;
+    
+    string $FOutput = `frameLayout -height 150 -l "File Output" -collapsable 1 "OUTPUT_FRAME"`;
+    
+        string $layout = formLayout();
+    
+            string $Frame1 = `frameLayout -width 450 -labelVisible 0 dir`;
+    
+                rowColumnLayout -numberOfColumns 2 -columnWidth 1 50 -columnWidth  2 425;
+    
+                    //BUTTON FIND DIRECTORY
+                    $G_UI_Button_Director_Name = `button -command "DML_GUI_COMMANDS Directory_Search" -backgroundColor 1.0 0.4 0.4  -label "Dir" "DIRECTORY_BUTTON"`;
+    
+                    //TEXTFIELD CURRENT WORKING DIRECTORY    
+                    $G_UI_Textfield_Current_Directory = `textField -editable 0 "DIRECTORY_TEXT"`;
+    
+                    //BUTTON FILE
+                    button -enable 0 -width 50 -label "Name" "FILE_BUTTON";
+    
+	                //TEXTFIELD OUTPUT NAME
+                    $G_UI_Textfield_Current_Name = `textField`;
+                    
+                setParent..;
+            setParent..;
+            
+            string $Frame2 = `DEPH`;
+            
+            string $Frame3 = `frameLayout -labelVisible 0 Exporter`;
+            
+                button -command "DML_GUI_COMMANDS Export" -width 50 -label "EXPORT" -backgroundColor 0 1 0 BUTTON_EXPORT;
+                
+            setParent..;    
+        setParent..;
+    setParent..;
+        
+	formLayout -e
+		-af $Frame1 "top"    3 
+		-af $Frame1 "left"   5
+		-af $Frame1 "right"  3
+		-an $Frame1 "bottom"
+        
+		-ac $Frame2 "top"    5 $Frame3
+		-af $Frame2 "left"   5
+		-af $Frame2 "right"  3
+		-an $Frame2 "bottom" 
+        
+		-ac $Frame3 "top"    10 $Frame1
+		-af $Frame3 "left"   5
+		-af $Frame3 "right"  3
+		-an $Frame3 "bottom"  
+        $layout;
+    
+    return $FOutput;
+}
+
+proc string FILE_FUCTIONS()
+{
+    string $frame = `frameLayout -labelVisible 0`;
+    
+        columnLayout;
+        
+            button -label Back -command "DML_GUI_COMMANDS back" "BACK_BUTTON";
+            
+        setParent..;
+        
+    setParent..;
+    
+    return $frame;
+}
+
+proc string DIRECTORY()
+{
+    global string $G_UI_TextScrollList_Folders,$G_UI_TextScrollList_Files;
+    
+    string $layout = formLayout("Pannalsfor");
+    
+        string $Frame1 = `frameLayout -labelVisible 0`;
+        
+            //USED FOR DISPLAYING DIR AND FILES
+            string $Dir_panal = `paneLayout -configuration vertical2 
+            "DIR_Panal"`;
+        
+            //SHOWS SUB DIR
+            $G_UI_TextScrollList_Folders = `textScrollList -doubleClickCommand "DML_GUI_COMMANDS dubbleclick" -selectCommand "DML_GUI_COMMANDS click" -numberOfRows 8-allowMultiSelection 0 
+            "DIRECTORY_SCROLL"`;
+        
+            //SHOWS FILES
+            $G_UI_TextScrollList_Files = `textScrollList -selectCommand "DML_GUI_COMMANDS Namechange" -numberOfRows 8 -allowMultiSelection 0 
+            "FILE_SCROLL"`;
+        
+            setParent..;
+            
+        setParent..;
+        
+        string $Frame2 = `FILE_FUCTIONS`;
+        
+    setParent..;
+    
+	formLayout -e
+    
+		-af $Frame2 "top"    10 
+		-af $Frame2 "left"   10
+		-an $Frame2 "right"
+		-an $Frame2 "bottom" 
+        
+		-ac $Frame1 "top"    10 $Frame2 
+		-af $Frame1 "left"   10
+		-af $Frame1 "right"  10	
+		-af $Frame1 "bottom" 0
+        
+        $layout;
+    
+    return $layout;
+}
+
+proc WINDOW()
+{
+	window -menuBar 1 "DML_EXPORTER";
+	
+	menu "Window Setings";
+	
+	menuItem -command "DML_GUI_COMMANDS Save;" Save;
+	
+	menuItem -command "DML_GUI_COMMANDS Reset;" Reset;
+    
+    menuItem -command "DML_GUI_COMMANDS Load;" ReLoad;
+	
+	menuItem -command "DML_GUI_COMMANDS Defalult;" Defaulat;
+	
+	setParent -m ..;
+}
+
+proc GUI()
+{   
+	global string
+		$G_UI_Textfield_Current_Directory,
+		$G_UI_Textfield_Current_Name,
+		$G_UI_TextScrollList_Folders,
+		$G_UI_TextScrollList_Files,
+		$G_UI_Button_Director_Name,
+		$G_UI_OutPut_Deph,
+		$G_UI_Activate_Animation_Toggle,
+		$G_UI_Animation_Set_Container,
+        $G_GUI_NORMALS_CHECKBOX,
+        $G_GUI_UV_CHECKBOX,
+        $G_GUI_BINDING_CHECKBOX,
+        $G_GUI_COLORS_CHECKBOX;
+	
+    WINDOW;
+	
+	//START GUI
+    
+    string $Baseform = `formLayout -width 400 -height 400 "BASE"`;
+    
+    //NAME AND VERSION
+    string $FName = `NAME`;
+    
+    //DIRECTORY & FILE NAME
+    string $FOutput = `OUTPUT`;
+    
+	//HOLDS ALL TOOLS AND PREFS FOR THE EXPORT BUTTON
+    string $Tabs = `tabLayout "TABS"`;
+    
+	//FORM SUB DIRECTORYS
+    string $Dir_List_form = `DIRECTORY`;
+
+    //FRAMES THE FORM FOR THE MESH ELEMENTS
+    string $mesh_opts = `MESH_OPS`;
+    
+    string $mesh_opts = `ANIMATION_OPS`;
+       
+//END GUI
+	
+//LAYOUT GUI
+
+	tabLayout -e 
+		
+		-tabLabelIndex 1 "Directory List" 
+		
+		-tabLabelIndex 2 "Mesh Options"
+        
+		-tabLabelIndex 3 "Animation Options" 
+		
+		$Tabs;
+
+    //BASE LAYOUT
+	formLayout -e		
+		-af $FName top    0
+		-af $FName left   0
+		-af $FName right  0
+		-an $FName bottom
+		
+		-ac $FOutput top    0 $FName
+		-af $FOutput left   0
+		-af $FOutput right  0
+		-an $FOutput bottom
+		
+		-ac $Tabs top    10 $FOutput
+		-af $Tabs left   0
+		-af $Tabs right  0
+		-af $Tabs bottom 0
+	$Baseform;
+    
+	//tabLayout -e -selectTab $FOutput $Tabs;
+	
+	showWindow "DML_EXPORTER";
+	
+	DML_GUI_COMMANDS Load;
+	DML_GUI_COMMANDS Dir;
+	window -edit -sizeable 1 -wh 412 650 -mb 1 -rtf 0 "DML_EXPORTER";
+}
+
+global proc SDDXGUI()
+{              
+    /// CHECK FOR EXISTING WINDOW ///
+    if (!` window -ex DML_EXPORTER ` )
+    {
+        GUI;
+    }
+    else
+    {
+        deleteUI DML_EXPORTER;
+        GUI;
+    }
+}

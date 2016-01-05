@@ -1,0 +1,479 @@
+global proc string DML_FloatToString(float $flt)
+{
+	string $str = $flt;
+	string $Dismal = `match "[\.]" $str`;
+	string $e = `match "e" $str`;
+	print $Dismal;
+	if(`gmatch $Dismal "."`)
+	{
+		if(`gmatch $e "e"`)
+			return "0.0";
+		else
+			return $str;
+		
+	}
+	else if(!`gmatch $Dismal "."`)
+	{
+		if(`gmatch $e "e"`)
+			return "0.0";
+		else
+			return ($str+".0");
+	}
+}
+global proc int DML_IsGroup ()
+{
+    //Get The First Object in the selection List    
+    string $Transform = `DML_FirstSelected`;
+    
+    if(`DML_ShapeType $Transform` == "group")
+    {
+        return yes;
+    }
+    else
+    {
+        return no;
+    }
+}
+
+proc DirectX_UVs()
+{
+	string $comp,$Comps[] = ` ls -flatten (".map[*]") `;
+	for($comp in $Comps)
+	{
+		float $xy[] = `polyEditUV -q $comp`;
+		
+		int $iU =  (match(".",`DML_FloatToString(abs($xy[0]))`));
+		int $iV = (match(".",`DML_FloatToString(abs($xy[1]))`));
+		float $U = (match(".[0-9]+$",`DML_FloatToString(abs($xy[0]))`));
+		float $V = (match(".[0-9]+$",`DML_FloatToString(abs($xy[1]))`));		
+		
+		polyEditUV -r 0 -u ((abs(($U-$iU)))) -v (((abs($V-$iV))*-1)+1) $comp;
+	}
+}
+
+
+
+proc DirectxVertices (string $clone)
+{	
+	float $Pointsz[] = `getAttr ($clone+".cp[*].zv")`;
+	
+	int $i;
+	
+	for($i = 0; $i < `size $Pointsz` ; $i++)
+	{
+		setAttr ($clone+".cp["+$i+"].zv") ($Pointsz[$i]*-1);
+	}
+}
+
+proc float[] DirectxMatrix (string $Obj1)
+{
+	float $Resault[];
+	float $m1[] = `xform -q -os -m $Obj1`;
+	float $m2[] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+	
+	/*M[0][0]*/  $Resault[0]  = (($m1[0]  * $m2[0]) + ($m1[1]  * $m2[4]) + ($m1[2]  * $m2[8])  + ($m1[3]  * $m2[12]));
+	/*M[0][1]*/  $Resault[1]  = (($m1[0]  * $m2[1]) + ($m1[1]  * $m2[5]) + ($m1[2]  * $m2[9])  + ($m1[3]  * $m2[13]));
+	/*M[0][2]*/  $Resault[2]  = (($m1[0]  * ($m2[2]*-1)) + ($m1[1]  * ($m2[6]*-1)) + ($m1[2]  * ($m2[10]*-1)) + ($m1[3]  * ($m2[14]*-1)));
+	/*M[0][3]*/  $Resault[3]  = (($m1[0]  * $m2[3]) + ($m1[1]  * $m2[7]) + ($m1[2]  * $m2[11]) + ($m1[3]  * $m2[15]));
+	/*M[1][0]*/  $Resault[4]  = (($m1[4]  * $m2[0]) + ($m1[5]  * $m2[4]) + ($m1[6]  * $m2[8])  + ($m1[7]  * $m2[12]));
+	/*M[1][1]*/  $Resault[5]  = (($m1[4]  * $m2[1]) + ($m1[5]  * $m2[5]) + ($m1[6]  * $m2[9])  + ($m1[7]  * $m2[13]));
+	/*M[1][2]*/  $Resault[6]  = (($m1[4]  * ($m2[2]*-1)) + ($m1[5]  * ($m2[6]*-1)) + ($m1[6]  * ($m2[10]*-1)) + ($m1[7]  * ($m2[14]*-1)));
+	/*M[1][3]*/  $Resault[7]  = (($m1[4]  * $m2[3]) + ($m1[5]  * $m2[7]) + ($m1[6]  * $m2[11]) + ($m1[7]  * $m2[15]));
+	/*M[2][0]*/  $Resault[8]  = (($m1[8]  * ($m2[0]*-1)) + ($m1[9]  * ($m2[4]*-1)) + ($m1[10] * ($m2[8]*-1))  + ($m1[11] * ($m2[12]*-1)));
+	/*M[2][1]*/  $Resault[9]  = (($m1[8]  * ($m2[1]*-1)) + ($m1[9]  * ($m2[5]*-1)) + ($m1[10] * ($m2[9]*-1))  + ($m1[11] * ($m2[13]*-1)));
+	/*M[2][2]*/  $Resault[10] = (($m1[8]  * $m2[2]) + ($m1[9]  * $m2[6]) + ($m1[10] * $m2[10]) + ($m1[11] * $m2[14]));
+	/*M[2][3]*/  $Resault[11] = (($m1[8]  * $m2[3]) + ($m1[9]  * $m2[7]) + ($m1[10] * $m2[11]) + ($m1[11] * $m2[15]));
+	/*M[3][0]*/  $Resault[12] = (($m1[12] * $m2[0]) + ($m1[13] * $m2[4]) + ($m1[14] * $m2[8])  + ($m1[15] * $m2[12]));
+	/*M[3][1]*/  $Resault[13] = (($m1[12] * $m2[1]) + ($m1[13] * $m2[5]) + ($m1[14] * $m2[9])  + ($m1[15] * $m2[13]));
+	/*M[3][2]*/  $Resault[14] = (($m1[12] * ($m2[2]*-1)) + ($m1[13] * ($m2[6]*-1)) + ($m1[14] * ($m2[10]*-1)) + ($m1[15] * ($m2[14]*-1)));
+	/*M[3][3]*/  $Resault[15] = (($m1[12] * $m2[3]) + ($m1[13] * $m2[7]) + ($m1[14] * $m2[11]) + ($m1[15] * $m2[15]));
+	
+	xform -m $Resault[0] $Resault[1] $Resault[2] $Resault[3] $Resault[4] $Resault[5] $Resault[6] $Resault[7] $Resault[8] $Resault[9] $Resault[10] $Resault[11] $Resault[12] $Resault[13] $Resault[14] $Resault[15] $Obj1;
+	
+	return $Resault;
+}
+
+proc string GetShape(string $Transform)
+{	
+	string $shape[] = `listRelatives -s -c -f $Transform`;
+	
+	return $shape[0];
+}
+
+proc string  Make_Clone (string $Selected)
+{
+	string $AllTransforms[] = `duplicate -rr -renameChildren $Selected`; 
+	
+	if(size (`listRelatives -p $AllTransforms`))
+		$AllTransforms = `parent -w $AllTransforms[0]`;
+	
+	if(size (`listRelatives -c -path -type transform $AllTransforms[0]`))
+		delete `listRelatives -c -path -type transform $AllTransforms[0]`;
+	
+	string $Clone = `rename $AllTransforms[0] ("DX_Clone_"+(DML_PureName($Selected)))`;
+	
+	return $Clone;
+}
+
+proc vector Center_PlaceHolder (string $Selected,string $PlaceHolder)
+{
+	vector $Center = `objectCenter $Selected`;
+	
+	move  ($Center.x) ($Center.y) ($Center.z) $PlaceHolder;
+	
+	return $Center;
+	
+}
+
+proc string[] Center_PlaceHolder2 ()
+{
+	int $i;
+	
+	string $Full_Selection = `DML_FirstSelected`;
+
+	string $Selection = `DML_PureName $Full_Selection`;
+	
+	string $TransformCenter = ("DXCenter_" + $Selection);
+	
+	string $LocatorCenter = ($TransformCenter + "_Locator");
+	
+	string $TransformPivot = ("DXPivot_" + $Selection);
+	
+	string $LocatorPivot = ($TransformPivot + "_Locator");
+	
+	duplicate -rr -renameChildren;
+	
+	if(size (`listRelatives -p`))
+		parent -w;
+	
+	if(size(`listRelatives -c -type transform`))
+		delete `listRelatives -c -path -type transform`;
+	
+	float $Center[] = `objectCenter`;
+	
+	float $Translate[] = `xform -q -ws -rp`;
+	
+	float $Rotate[] = `xform -q -ws -ro`;
+	
+	float $Scale[] = `xform -q -r -s`;
+	
+	delete;
+	
+	createNode -name $TransformCenter "transform";
+	
+	createNode -skipSelect -name $LocatorCenter -parent $TransformCenter "locator";
+	
+	xform -ws -t $Translate[0] $Translate[1] $Translate[2];
+	
+	xform -ws -ro $Rotate[0] $Rotate[1] $Rotate[2];
+	
+	xform -ws -s $Scale[0] $Scale[1] $Scale[2];
+	
+	
+	createNode -name $TransformPivot "transform";
+	
+	createNode -skipSelect -name $LocatorPivot -parent $TransformPivot "locator";
+	
+	xform -ws -t $Center[0] $Center[1] $Center[2];
+	
+	xform -ws -ro $Rotate[0] $Rotate[1] $Rotate[2];
+	
+	xform -ws -s $Scale[0] $Scale[1] $Scale[2];
+	
+	select -r $Full_Selection;
+	
+	return {$TransformCenter,$TransformPivot};
+	
+}
+
+
+proc string PlaceHolder(string $Selected)
+{
+	string $a,$attr[] = {".rx",".ry",".rz",".sx",".sy",".sz"};
+	
+	string $Transform = `createNode -skipSelect -name ("PlaceHolder_"+DML_PureName($Selected)) transform`;
+	
+	string $Locator   = `createNode -skipSelect -name ($Transform+"_Locator") -parent $Transform  locator`;
+	
+	for($a in $attr)
+	{    
+		setAttr ($Transform+$a) `getAttr ($Selected+$a)`;
+	}
+	
+	return $Transform;
+}
+
+proc string Clone_Locator ()
+{
+	string $Selected = `DML_FirstSelected`;
+	
+	string $PlaceHolder = `PlaceHolder $Selected`;
+	
+	Center_PlaceHolder $Selected $PlaceHolder;
+	
+	string $clone = `rename $PlaceHolder ("DX_Clone_"+(DML_PureName($Selected)))`;
+	
+	//DirectxMatrix $clone;	
+	
+	return $clone;
+}
+
+proc string Clone_Group ()
+{
+	string $Selected = `DML_FirstSelected`;
+	
+	string $PlaceHolder = `PlaceHolder $Selected`;
+	
+	vector $Center = `Center_PlaceHolder $Selected $PlaceHolder`;
+	
+	string $clone = `Make_Clone $Selected`;
+	
+	makeIdentity -apply true -t 1 -r 0 -s 0 -n 0 $clone;
+	
+	xform -zeroTransformPivots $clone;
+	
+	float $mx[] = `xform -q -ws -m $PlaceHolder`;
+	
+	xform -ws -m  $mx[0] $mx[1] $mx[2] $mx[3] $mx[4] $mx[5] $mx[6] $mx[7] $mx[8] $mx[9] $mx[10] $mx[11] $mx[12] $mx[13] $mx[14] $mx[15] $clone;
+	
+	delete $PlaceHolder;
+	
+	DirectxMatrix $clone;
+	
+	select -r $Selected;
+	
+	return $clone;
+}
+
+proc string Clone_Mesh ()
+{
+	string $Selected = `DML_FirstSelected`;
+	
+	string $PlaceHolders[] = `Center_PlaceHolder2`;
+	
+	string $clone = `Make_Clone $Selected`;
+		
+	makeIdentity -apply true -t 1 -r 0 -s 0 -n 0 $clone;
+	
+	xform -cp $clone;
+	
+	move -rpr 0 0 0 $clone;
+	
+	makeIdentity -apply true -t 1 -r 0 -s 0 -n 0 $clone;
+	
+	vector $v1 = `xform -q -ws -rp $PlaceHolders[0]`;
+	
+	xform -ws -t(($v1.x))(($v1.y))(($v1.z)) $clone;
+
+	select -r $clone;
+	
+	//DirectX_UVs;
+	
+	//DirectxMatrix $clone;
+	
+	//DirectxVertices $clone;
+	
+	string $BlindData[] = `listConnections -scn 1 -d 0 -s 1 -exactType 1 -t "polyBlindData" (GetShape($Selected))`;
+	
+	if(size($BlindData))
+		connectAttr -force -nextAvailable ($BlindData[0]+".message") (`GetShape $clone`+".blindDataNodes");
+	
+	
+	delete $PlaceHolders;
+	
+	return $clone;
+}
+
+proc TraverseHiarky (int $fileid)
+{
+	global string $G_Egnore_List[];
+	
+	string $CurentlySelected = (DML_PureName(`DML_FirstSelected`));
+	
+	print ("Now Examing '"+$CurentlySelected+"'\n");
+	
+	if(!(stringArrayContains(`DML_FirstSelected`, $G_Egnore_List)))
+	{
+		
+		if(`DML_IsTransform`)
+		{
+			print ("\t'"+$CurentlySelected+"' Has Is A Base Classifacation Of Type 'Transform'\n");
+			
+			string $Parents[] = `listRelatives -parent`;
+			
+			if(`size $Parents`)
+			{
+				parent -world; 
+				
+				fprint $fileid (("parent ") + "\"" + (DML_PureName(`DML_FirstSelected`)) + "\" ");
+				
+				fprint $fileid ("\"" + (DML_PureName($Parents[0])) + "\"; \n");
+			}
+			
+			
+			if(`DML_IsGroup`)
+			{
+				print ("\t\t And A Secondary Classifaction of Type 'Group'\n");
+				
+				string $clone = `Clone_Group`;
+				
+				if(`size $Parents`)
+				{
+					fprint $fileid (("parent ") + "\"" + ($clone) + "\" ");
+					
+					fprint $fileid ("\"" + ("DX_Clone_") + (DML_PureName($Parents[0])) + "\"; \n");
+				}
+			}
+			
+			if(`DML_IsTransformMesh`)
+			{
+				print ("\t\t And A Secondary Classifaction of Type 'Mesh'\n");
+				
+				string $clone = `Clone_Mesh`;
+				
+				if(`size $Parents`)
+				{
+					fprint $fileid (("parent ") + "\"" + ($clone) + "\" ");
+					
+					fprint $fileid ("\"" + ("DX_Clone_") + (DML_PureName($Parents[0])) + "\"; \n");
+				}
+				
+			}
+			if(`DML_IsTransformLocator`)
+			{
+				print ("\t\t And A Secondary Classifaction of Type 'Locator'\n");
+				
+				string $clone = `Clone_Locator`;
+				
+				if(`size $Parents`)
+				{
+					fprint $fileid (("parent ") + "\"" + ($clone) + "\" ");
+					
+					fprint $fileid ("\"" + ("DX_Clone_") + (DML_PureName($Parents[0])) + "\"; \n");
+				}
+			}
+			
+			select -r $CurentlySelected;
+			
+			string $Childern[] = `listRelatives -type transform`;
+			
+			for ($CurentlySelected in $Childern)
+			{
+				select -r $CurentlySelected;
+				
+				TraverseHiarky $fileid;
+				
+			}
+		}
+	}
+	else
+	{
+		print ($CurentlySelected+" Was part of the egnore list\n");
+	}
+}
+
+
+proc string[] Roots()
+{
+	global string $G_Egnore_List[];
+	
+	string $currentSelection[] = `ls -sl`;
+	string $RootParents[];
+	string $item;
+	
+	//Scan Through All Transform Nodes
+	for($item in `ls -type transform`)
+	{
+		select -r $item;
+		//Does This Node Have Parents
+		
+		if(!(stringArrayContains(`DML_FirstSelected`, $G_Egnore_List)))
+		{
+			//print ($item+" Did not Match one of the Egnore Items\n");
+			
+			if(!size(`listRelatives -p -typ transform`))
+			{
+				//print ("\t"+$item+" Does not have parent transforms\n");
+				
+				//Does This Node Have A Shape Attached To It
+				if(size(`listRelatives -ad -type mesh`))
+				{
+					//print ("\t\t"+$item+" has Relatives with type mesh\n");
+					
+					if(!size(`listRelatives -ad -type "camera"`))
+					{
+						//Add The Parent To the Current selection list
+						$RootParents[size($RootParents)] = $item;
+						print ("\t\t\t"+$item+" Was Add To OutPut\n");
+					}
+					else
+					{
+						warning ("\t\t\t"+$item+" Did Not Get Added for Some Reason\n");
+					}
+				}
+			}
+		}
+	}
+	
+	select -r $currentSelection;
+	
+	return $RootParents;
+}
+
+global proc DML_RECONSTRUCT_SCENE ()
+{
+	global string $G_Egnore_List[];
+	clear $G_Egnore_List;
+	string $types = "-type AISEnvFacade -type ComputeGlobal -type ComputeLocal -type HIKCharacterNode -type HIKControlSetNode -type HIKEffector2State -type HIKEffectorFromCharacter -type HIKFK2State -type HIKPinning2State -type HIKProperty2State -type HIKRetargeterNode -type HIKSK2State -type HIKSkeletonGeneratorNode -type HIKSolverNode -type HIKState2Effector -type HIKState2FK -type HIKState2SK -type addDoubleLinear -type addMatrix -type adskMaterial -type aimConstraint -type airField -type airManip -type alignCurve -type alignManip -type alignSurface -type ambientLight -type angleBetween -type angleDimension -type animBlend -type animBlendInOut -type animBlendNodeAdditive -type animBlendNodeAdditiveDA -type animBlendNodeAdditiveDL -type animBlendNodeAdditiveF -type animBlendNodeAdditiveFA -type animBlendNodeAdditiveFL -type animBlendNodeAdditiveI16 -type animBlendNodeAdditiveI32 -type animBlendNodeAdditiveRotation -type animBlendNodeAdditiveScale -type animBlendNodeBoolean -type animBlendNodeEnum -type animClip -type animCurveTA -type animCurveTL -type animCurveTT -type animCurveTU -type animCurveUA -type animCurveUL -type animCurveUT -type animCurveUU -type animLayer -type anisotropic -type annotationShape -type arcLengthDimension -type areaLight -type arrayMapper -type arrowManip -type attachCurve -type attachSurface -type attrHierarchyTest -type audio -type avgCurves -type avgCurvesManip -type avgNurbsSurfacePoints -type avgSurfacePoints -type axesActionManip -type ballProjManip -type barnDoorManip -type baseLattice -type bevel -type bevelManip -type bevelPlus -type bezierCurve -type bezierCurveToNurbs -type blendColorSets -type blendColors -type blendDevice -type blendManip -type blendShape -type blendTwoAttr -type blendWeighted -type blindDataTemplate -type blinn -type boneLattice -type boolean -type boundary -type brownian -type brush -type bulge -type bump2d -type bump3d -type buttonManip -type cMuscleCreator -type cMuscleDebug -type cMuscleDirection -type cMuscleDisplace -type cMuscleDisplay -type cMuscleFalloff -type cMuscleKeepOut -type cMuscleMultiCollide -type cMuscleObject -type cMuscleRelative -type cMuscleShader -type cMuscleSmartCollide -type cMuscleSmartConstraint -type cMuscleSpline -type cMuscleSplineDeformer -type cMuscleStretch -type cMuscleSurfAttach -type cMuscleSystem -type cacheBlend -type cacheFile -type camera -type cameraManip -type cameraPlaneManip -type cameraSet -type cameraView -type centerManip -type character -type characterMap -type characterOffset -type checker -type choice -type chooser -type circleManip -type circleSweepManip -type clamp -type clipLibrary -type clipScheduler -type closeCurve -type closeSurface -type closestPointOnMesh -type closestPointOnSurface -type cloth -type cloud -type cluster -type clusterFlexorShape -type clusterHandle -type coiManip -type collisionModel -type colorProfile -type componentManip -type concentricProjManip -type condition -type container -type containerBase -type contour_composite -type contour_contrast_function_levels -type contour_contrast_function_simple -type contour_only -type contour_ps -type contour_shader_combi -type contour_shader_curvature -type contour_shader_depthfade -type contour_shader_factorcolor -type contour_shader_framefade -type contour_shader_layerthinner -type contour_shader_maxcolor -type contour_shader_silhouette -type contour_shader_simple -type contour_shader_widthfromcolor -type contour_shader_widthfromlight -type contour_shader_widthfromlightdir -type contour_store_function -type contour_store_function_simple -type contrast -type copyColorSet -type copyUVSet -type cpManip -type crater -type createBPManip -type createCVManip -type createColorSet -type createEPManip -type createUVSet -type cubeManip -type cubicProjManip -type curveEdManip -type curveFromMeshCoM -type curveFromMeshEdge -type curveFromSubdivEdge -type curveFromSubdivFace -type curveFromSurfaceBnd -type curveFromSurfaceCoS -type curveFromSurfaceIso -type curveInfo -type curveIntersect -type curveNormalizerAngle -type curveNormalizerLinear -type curveSegmentManip -type curveVarGroup -type cylindricalLightLocator -type cylindricalProjManip -type dagContainer -type dagPose -type decomposeMatrix -type defaultLightList -type defaultRenderUtilityList -type defaultShaderList -type defaultTextureList -type deformBend -type deformBendManip -type deformFlare -type deformFlareManip -type deformSine -type deformSineManip -type deformSquash -type deformSquashManip -type deformTwist -type deformTwistManip -type deformWave -type deformWaveManip -type deleteColorSet -type deleteComponent -type deleteUVSet -type detachCurve -type detachSurface -type dgs_material -type dgs_material_photon -type dielectric_material -type dielectric_material_photon -type directedDisc -type directionManip -type directionalLight -type discLightLocator -type discManip -type diskCache -type displacementShader -type displayLayer -type displayLayerManager -type distanceBetween -type distanceDimShape -type distanceManip -type dof -type dofManip -type doubleShadingSwitch -type dpBirailSrf -type dragField -type dropoffLocator -type dropoffManip -type dynAttenuationManip -type dynController -type dynGlobals -type dynHolder -type dynSpreadManip -type dynamicConstraint -type effectorLocator -type effectorLocatorManip -type effectorRotationManip -type emitterManip -type enableManip -type envBall -type envChrome -type envCube -type envFacade -type envFog -type envSky -type envSphere -type environmentFog -type explodeNurbsShell -type expression -type extendCurve -type extendCurveDistanceManip -type extendSurface -type extendSurfaceDistanceManip -type extrude -type extrudeManip -type facade -type ffBlendSrf -type ffBlendSrfObsolete -type ffFilletSrf -type ffd -type fieldManip -type fieldsManip -type file -type filletCurve -type filterClosestSample -type filterEuler -type filterResample -type filterSimplify -type fitBspline -type flexorShape -type flow -type fluidEmitter -type fluidShape -type fluidSliceManip -type fluidTexture2D -type fluidTexture3D -type follicle -type forceUpdateManip -type fourByFourMatrix -type fractal -type frameCache -type freePointManip -type freePointTriadManip -type gammaCorrect -type geoConnectable -type geoConnector -type geometryConstraint -type geometryFilter -type geometryOnLineManip -type geometryVarGroup -type ghostLocator -type globalCacheControl -type globalStitch -type granite -type gravityField -type grid -type groupId -type groupParts -type guide -type hairConstraint -type hairSystem -type hairTubeShader -type hardenPoint -type hardwareRenderGlobals -type heightField -type hikEffector -type hikFloorContactMarker -type hikGroundPlane -type hikHandle -type hikSolver -type historySwitch -type holdMatrix -type hsvToRgb -type hwReflectionMap -type hwRenderGlobals -type hyperGraphInfo -type hyperLayout -type hyperView -type ik2Bsolver -type ikEffector -type ikHandle -type ikMCsolver -type ikPASolver -type ikRPManip -type ikRPsolver -type ikSCsolver -type ikSplineManip -type ikSplineSolver -type ikSpringSolver -type ikSystem -type imagePlane -type implicitBox -type implicitCone -type implicitSphere -type indexManip -type insertKnotCurve -type insertKnotSurface -type instancer -type intersectSurface -type isoparmManip -type jiggle -type joint -type jointCluster -type jointClusterManip -type jointFfd -type jointLattice -type jointTranslateManip -type keyframeRegionManip -type lambert -type lattice -type layeredShader -type layeredTexture -type leastSquaresModifier -type leather -type lightFog -type lightInfo -type lightLinker -type lightList -type lightManip -type limitManip -type lineManip -type lineModifier -type locator -type lodGroup -type lodThresholds -type loft -type lookAt -type luminance -type makeGroup -type makeIllustratorCurves -type makeNurbCircle -type makeNurbCone -type makeNurbCube -type makeNurbCylinder -type makeNurbPlane -type makeNurbSphere -type makeNurbTorus -type makeNurbsSquare -type makeTextCurves -type makeThreePointCircularArc -type makeThreePointCircularArcManip -type makeTwoPointCircularArc -type makeTwoPointCircularArcManip -type manip2DContainer -type manipContainer -type mapVizShape -type marble -type markerManip -type materialFacade -type materialInfo -type membrane -type mentalrayCCMeshProxy -type mentalrayCurveApprox -type mentalrayDisplaceApprox -type mentalrayFramebuffer -type mentalrayGlobals -type mentalrayIblShape -type mentalrayItemsList -type mentalrayLightProfile -type mentalrayOptions -type mentalrayOutputPass -type mentalrayPhenomenon -type mentalrayRenderPass -type mentalrayShader -type mentalraySubdivApprox -type mentalraySurfaceApprox -type mentalrayTessellation -type mentalrayText -type mentalrayTexture -type mentalrayUserBuffer -type mentalrayUserData -type mentalrayVertexColors -type mesh -type meshVarGroup -type mi_bump_flakes -type mi_car_paint_phen -type mi_car_paint_phen_x -type mi_car_paint_phen_x_passes -type mi_metallic_paint -type mi_metallic_paint_output_mixer -type mi_metallic_paint_x -type mi_metallic_paint_x_passes -type mia_ciesky -type mia_envblur -type mia_exposure_photographic -type mia_exposure_simple -type mia_lens_bokeh -type mia_light_surface -type mia_material -type mia_material_x -type mia_material_x_passes -type mia_photometric_light -type mia_physicalsky -type mia_physicalsun -type mia_portal_light -type mia_roundcorners -type mib_amb_occlusion -type mib_bent_normal_env -type mib_blackbody -type mib_bump_basis -type mib_bump_map -type mib_bump_map2 -type mib_cie_d -type mib_color_alpha -type mib_color_average -type mib_color_intensity -type mib_color_interpolate -type mib_color_mix -type mib_color_spread -type mib_continue -type mib_dielectric -type mib_fast_occlusion -type mib_fg_occlusion -type mib_geo_add_uv_texsurf -type mib_geo_cone -type mib_geo_cube -type mib_geo_cylinder -type mib_geo_instance -type mib_geo_instance_mlist -type mib_geo_sphere -type mib_geo_square -type mib_geo_torus -type mib_glossy_reflection -type mib_glossy_refraction -type mib_illum_blinn -type mib_illum_cooktorr -type mib_illum_hair -type mib_illum_lambert -type mib_illum_phong -type mib_illum_ward -type mib_illum_ward_deriv -type mib_lens_clamp -type mib_lens_stencil -type mib_light_infinite -type mib_light_photometric -type mib_light_point -type mib_light_spot -type mib_lightmap_sample -type mib_lightmap_write -type mib_lookup_background -type mib_lookup_cube1 -type mib_lookup_cube6 -type mib_lookup_cylindrical -type mib_lookup_spherical -type mib_opacity -type mib_passthrough_bump_map -type mib_photon_basic -type mib_ray_marcher -type mib_reflect -type mib_refract -type mib_refraction_index -type mib_shadow_transparency -type mib_texture_checkerboard -type mib_texture_filter_lookup -type mib_texture_lookup -type mib_texture_lookup2 -type mib_texture_polkadot -type mib_texture_polkasphere -type mib_texture_remap -type mib_texture_rotate -type mib_texture_turbulence -type mib_texture_vector -type mib_texture_wave -type mib_transparency -type mib_twosided -type mib_volume -type mip_binaryproxy -type mip_cameramap -type mip_card_opacity -type mip_fgshooter -type mip_gamma_gain -type mip_grayball -type mip_matteshadow -type mip_matteshadow_mtl -type mip_mirrorball -type mip_motion_vector -type mip_motionblur -type mip_rayswitch -type mip_rayswitch_advanced -type mip_rayswitch_environment -type mip_rayswitch_stage -type mip_render_subset -type misss_call_shader -type misss_fast_lmap_maya -type misss_fast_shader -type misss_fast_shader_x -type misss_fast_shader_x_passes -type misss_fast_simple_maya -type misss_fast_skin_maya -type misss_lambert_gamma -type misss_lightmap_write -type misss_physical -type misss_physical_phen -type misss_set_normal -type misss_skin_specular -type motionPath -type motionPathManip -type mountain -type moveBezierHandleManip -type moveVertexManip -type movie -type mpBirailSrf -type multDoubleLinear -type multMatrix -type multilisterLight -type multiplyDivide -type mute -type nCloth -type nComponent -type nParticle -type nRigid -type nearestPointOnCurve -type network -type newtonField -type newtonManip -type noise -type nonLinear -type normalConstraint -type nucleus -type nurbsCurve -type nurbsCurveToBezier -type nurbsSurface -type nurbsTessellate -type nurbsToSubdiv -type nurbsToSubdivProc -type objectAttrFilter -type objectBinFilter -type objectFilter -type objectMultiFilter -type objectNameFilter -type objectRenderFilter -type objectScriptFilter -type objectSet -type objectTypeFilter -type ocean -type oceanShader -type offsetCos -type offsetCosManip -type offsetCurve -type offsetCurveManip -type offsetSurface -type offsetSurfaceManip -type oldBlindDataBase -type oldGeometryConstraint -type oldNormalConstraint -type oldTangentConstraint -type opticalFX -type orientConstraint -type orientationMarker -type oversampling_lens -type pairBlend -type paramDimension -type parentConstraint -type parti_volume -type parti_volume_photon -type particle -type particleAgeMapper -type particleCloud -type particleColorMapper -type particleIncandMapper -type particleSamplerInfo -type particleTranspMapper -type partition -type passContributionMap -type passMatrix -type path_material -type pfxHair -type pfxToon -type phong -type phongE -type physical_lens_dof -type physical_light -type pivot2dManip -type pivotAndOrientManip -type place2dTexture -type place3dTexture -type planarProjManip -type planarTrimSurface -type plusMinusAverage -type pointConstraint -type pointEmitter -type pointLight -type pointMatrixMult -type pointOnCurveInfo -type pointOnCurveManip -type pointOnLineManip -type pointOnPolyConstraint -type pointOnSurfManip -type pointOnSurfaceInfo -type pointOnSurfaceManip -type poleVectorConstraint -type polyAppend -type polyAppendVertex -type polyAutoProj -type polyAutoProjManip -type polyAverageVertex -type polyBevel -type polyBlindData -type polyBoolOp -type polyBridgeEdge -type polyChipOff -type polyCloseBorder -type polyCollapseEdge -type polyCollapseF -type polyColorDel -type polyColorMod -type polyColorPerVertex -type polyCone -type polyConnectComponents -type polyCopyUV -type polyCrease -type polyCreaseEdge -type polyCreateFace -type polyCreateToolManip -type polyCube -type polyCut -type polyCutManip -type polyCutManipContainer -type polyCylProj -type polyCylinder -type polyDelEdge -type polyDelFacet -type polyDelVertex -type polyDuplicateEdge -type polyEdgeToCurve -type polyExtrudeEdge -type polyExtrudeFace -type polyExtrudeVertex -type polyFlipEdge -type polyFlipUV -type polyHelix -type polyHoleFace -type polyLayoutUV -type polyMapCut -type polyMapDel -type polyMapSew -type polyMapSewMove -type polyMappingManip -type polyMergeEdge -type polyMergeFace -type polyMergeUV -type polyMergeVert -type polyMergeVertsManip -type polyMirror -type polyModifierManip -type polyMoveEdge -type polyMoveFace -type polyMoveFacetUV -type polyMoveUV -type polyMoveUVManip -type polyMoveVertex -type polyMoveVertexManip -type polyNormal -type polyNormalPerVertex -type polyNormalizeUV -type polyOptUvs -type polyPipe -type polyPlanarProj -type polyPlane -type polyPlatonicSolid -type polyPoke -type polyPokeManip -type polyPrimitiveMisc -type polyPrism -type polyProj -type polyProjManip -type polyPyramid -type polyQuad -type polyReduce -type polySelectEditFeedbackManip -type polySeparate -type polySewEdge -type polySmooth -type polySmoothFace -type polySmoothProxy -type polySoftEdge -type polySphProj -type polySphere -type polySpinEdge -type polySplit -type polySplitEdge -type polySplitRing -type polySplitToolManip1 -type polySplitVert -type polyStraightenUVBorder -type polySubdEdge -type polySubdFace -type polyToSubdiv -type polyToolFeedbackManip -type polyToolFeedbackShape -type polyTorus -type polyTransfer -type polyTriangulate -type polyTweak -type polyTweakUV -type polyUVRectangle -type polyUnite -type polyVertexNormalManip -type polyWedgeFace -type positionMarker -type postProcessList -type precompExport -type projectCurve -type projectTangent -type projectTangentManip -type projection -type projectionManip -type projectionMultiManip -type projectionUVManip -type propModManip -type propMoveTriadManip -type proxyManager -type psdFileTex -type quadPtOnLineManip -type quadShadingSwitch -type radialField -type ramp -type rampShader -type rbfSrf -type rbfSrfManip -type rebuildCurve -type rebuildSurface -type record -type rectangularLightLocator -type reference -type remapColor -type remapHsv -type remapValue -type renderBox -type renderCone -type renderGlobals -type renderGlobalsList -type renderLayer -type renderLayerManager -type renderPass -type renderPassSet -type renderQuality -type renderRect -type renderSphere -type resolution -type resultCurveTimeToAngular -type resultCurveTimeToLinear -type resultCurveTimeToTime -type resultCurveTimeToUnitless -type reverse -type reverseCurve -type reverseCurveManip -type reverseSurface -type reverseSurfaceManip -type revolve -type revolveManip -type revolvedPrimitiveManip -type rgbToHsv -type rigidBody -type rigidConstraint -type rigidSolver -type rock -type rotateHelper -type rotateLimitsManip -type rotateManip -type rotateUV2dManip -type roundConstantRadius -type roundConstantRadiusManip -type roundRadiusCrvManip -type roundRadiusManip -type sampler -type samplerInfo -type scaleConstraint -type scaleLimitsManip -type scaleManip -type scaleUV2dManip -type screenAlignedCircleManip -type script -type scriptManip -type sculpt -type selectionListOperator -type sequenceManager -type sequencer -type setRange -type shaderGlow -type shadingEngine -type shadingMap -type shellTessellate -type shot -type simpleVolumeShader -type singleShadingSwitch -type sketchPlane -type skinBinding -type skinCluster -type smear -type smoothCurve -type smoothTangentSrf -type snapshot -type snapshotShape -type snow -type softMod -type softModHandle -type softModManip -type solidFractal -type spBirailSrf -type sphericalLightLocator -type sphericalProjManip -type spotCylinderManip -type spotLight -type spotManip -type spring -type squareSrf -type squareSrfManip -type stencil -type stereoRigCamera -type stitchAsNurbsShell -type stitchSrf -type stitchSrfManip -type stroke -type strokeGlobals -type stucco -type studioClearCoat -type styleCurve -type subCurve -type subSurface -type subdAddTopology -type subdAutoProj -type subdBlindData -type subdCleanTopology -type subdHierBlind -type subdLayoutUV -type subdMapCut -type subdMapSewMove -type subdMappingManip -type subdPlanarProj -type subdProjManip -type subdTweak -type subdTweakUV -type subdiv -type subdivCollapse -type subdivComponentId -type subdivReverseFaces -type subdivSurfaceVarGroup -type subdivToNurbs -type subdivToPoly -type surfaceEdManip -type surfaceInfo -type surfaceLuminance -type surfaceSampler -type surfaceShader -type surfaceVarGroup -type tangentConstraint -type texLattice -type texLatticeDeformManip -type texMoveShellManip -type texSmoothManip -type texSmudgeUVManip -type textButtonManip -type textManip2D -type texture3dManip -type textureBakeSet -type textureToGeom -type time -type timeFunction -type timeToUnitConversion -type toggleManip -type toggleOnLineManip -type toolDrawManip -type toolDrawManip2D -type toonLineAttributes -type towPointOnCurveManip -type towPointOnSurfaceManip -type trans2dManip -type transUV2dManip -type transferAttributes -type transform -type transformGeometry -type translateLimitsManip -type translateManip -type translateUVManip -type transmat -type transmat_photon -type trim -type trimManip -type trimWithBoundaries -type triplanarProjManip -type tripleShadingSwitch -type trsInsertManip -type trsManip -type turbulenceField -type turbulenceManip -type tweak -type uniformField -type unitConversion -type unitToTimeConversion -type unknown -type unknownDag -type unknownTransform -type untrim -type useBackground -type uv2dManip -type uvChooser -type vectorProduct -type vectorRenderGlobals -type vertexBakeSet -type viewColorManager -type volumeAxisField -type volumeBindManip -type volumeFog -type volumeLight -type volumeNoise -type volumeShader -type vortexField -type water -type weightGeometryFilter -type wire -type wood -type wrap -type writeToColorBuffer -type writeToDepthBuffer -type writeToLabelBuffer -type writeToVectorBuffer -type wtAddMatrix -type xformManip";
+	string $items[] = listTransforms($types);
+	
+	for($item in $items)
+	{
+		$G_Egnore_List[`size $G_Egnore_List`] =  `longNameOf $item`;
+	}
+	string $Nodes[1000];
+	clear $Nodes;
+	string $Node;
+	string $roots[] = `Roots`;
+	int $i;
+	for($i = 0; $i <= `size $roots`; $i++){
+	    $Nodes[$i] = $roots[$i];
+	}
+	
+	if(`filetest -d "C:\\Temp\\DML_Data\\ReParent.mel"`)
+		sysFile -makeDir "C:\\Temp\\DML_Data";
+	
+	int $fileid = `fopen "C:\\Temp\\DML_Data\\ReParent.mel" "w"`;
+	
+	for ($Node in $Nodes)
+	{
+		select $Node;
+		TraverseHiarky $fileid;
+	}
+	
+	fclose $fileid;
+	
+	$fileId =`fopen "C:\\Temp\\DML_Data\\ReParent.mel" "r"`;
+	
+	string $nextLine = `fgetline $fileId`;
+	
+	while ( size( $nextLine ) > 0 )
+	{
+		eval ($nextLine);
+		
+		$nextLine = `fgetline $fileId`;
+	}
+	fclose $fileid;
+	
+	select -cl;
+	
+	for ($Node in $Nodes)
+	{
+		select -add (("DX_Clone_") + (DML_PureName($Node)));
+	}
+	
+	group -name "DirectX_Master_Clone_Holder"; xform -os -piv 0 0 0;
+	
+	//evalDeferred "delete DirectX_Master_Clone_Holder;";
+	
+}

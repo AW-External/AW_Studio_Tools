@@ -1,0 +1,17 @@
+//------
+//removes the array element at the given index - returns the resulting array
+//------
+global proc int[] DML_RemoveArrayIdx_Int( int $array[], int $index )
+{
+	int $removed[] = {};
+	
+	for( $n=0; $n<`size $array`; $n++ )
+	{
+		if( $n == $index )
+			continue;
+		else
+			$removed[( `size $removed` )] = $array[$n];
+	}
+
+	return $removed;
+}

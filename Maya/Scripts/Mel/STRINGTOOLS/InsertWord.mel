@@ -1,0 +1,26 @@
+global proc string InsertWord (string $item, string $insert, int $position)
+{
+	string	$List[];
+	string	$List2[];
+	string	$returnString;
+	int		$x, $y;
+	
+	$y = `tokenize $item " " $List`;
+	
+	for ($x=0; $x<$y; $x++)
+	{
+		if ($x == ($position-1))
+		{
+			$List2[`size $List2`] = (`strip $insert`);
+			$List2[`size $List2`] = (`strip $List[$x]`);
+		}
+		else
+		{
+			$List2[`size $List2`] = (`strip $List[$x]`);
+		}
+	}
+	
+	$returnString = stringArrayToString($List2," ");
+	
+	return $returnString;
+}

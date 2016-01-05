@@ -1,0 +1,28 @@
+/*
+takes an array of entries (as in array indicies), and shifts them in the direction specified.
+------------
+
+example: ReorderArray { "a,"b","c","d","e" } {3,4} up
+produces the resulting array:  { a,c,d,b,e }
+
+example: ReorderArray { "a,"b","c","d","e" } {1,2,5} up
+produces the resulting array:  { b,c,e,d,a }
+*/
+global proc string[] ReorderArray( string $array[], int $entries[], string $dir ) {
+	string $newArray[] = $array;
+	int $gaps[] = {};
+	int $be;
+
+	$entries = `sort $entries`;
+	$gaps[0] = $entries[0];
+	for( $n = 0; $n < `size $entries`-1; $n++ ) if( $entries[$n]+1 != $entries[( $n+1 )] ) {
+		$gaps[( `size $gaps` )] = $entries[$n];
+		$gaps[( `size $gaps` )] = $entries[( $n+1 )];
+		}
+	$gaps[( `size $gaps` )] = $entries[( `size $entries`-1 )];
+
+	for( $n = 0; $n < `size $gaps`; $n+=2 ) if( $dir == "up" ) $newArray = `ShiftArrayUp $newArray $gaps[$n] $gaps[( $n+1 )]`;
+	for( $n = 0; $n < `size $gaps`; $n+=2 ) if( $dir == "down" ) $newArray = `ShiftArrayDown $newArray $gaps[$n] $gaps[( $n+1 )]`;
+
+	return $newArray;
+	}

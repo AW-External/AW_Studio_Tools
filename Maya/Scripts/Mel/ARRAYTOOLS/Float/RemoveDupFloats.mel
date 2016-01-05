@@ -1,0 +1,43 @@
+global proc float[] RemoveDupFloats (float $Array[])
+{
+    int $irt, $Size = `size $Array`;
+    
+    float $Holder[] = $Array;
+    
+    clear $Array;
+    
+    for ($irt = 0; $irt < $Size; $irt++)
+    {
+        //Assine the next item in the array to a single float
+        //
+        float $itemA = $Holder[$irt];
+        
+        //Creat a Single float for iterating
+        //
+        float $itemB;
+        
+        //if switch gets turned off that Means a dup was found
+        //
+        int $add = on;
+        
+        //Scan through the Items add So Far
+        //
+        for($itemB in $Array)
+        {
+            //if The current item = any item already in the set or the start key or the end key turn off the add switch
+            //
+            if(`equivalent $itemB $itemA`)
+            {
+                $add = off;
+            }
+        }
+        
+		//Check to see if we need to add the current item
+		//
+		if($add)
+		{
+			$Array[`size $Array`] = $itemA;
+		}
+    }
+    return $Array;
+}

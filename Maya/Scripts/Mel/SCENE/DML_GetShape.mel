@@ -1,0 +1,6 @@
+global proc string DML_GetShape()
+{	
+	string $shape[] = `listRelatives -s -c -f`;
+	
+	return $shape[0];
+}

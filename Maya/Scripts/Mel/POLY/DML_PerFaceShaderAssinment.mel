@@ -1,0 +1,70 @@
+global proc int[]  DML_PerFaceShaderAssinment ()
+{
+    int $count = 0;
+    int $return[];
+    string $selected = `DML_FirstSelected`;
+    int $facecount = `DML_EvaluatePoly f`;
+    
+    string $selectedShape = `DML_GetShape`;
+    
+    //REGESTER THE FACE'S FOR THE THE OBJECT WE ARE INTERESTED IN
+    //
+    string $Meshfaces[] =  DML_ComponetList ("f");
+    
+    string $shaders[];
+    
+    int $i = $b = $add = 0;
+    
+    string $shaders[];
+    
+    //GET A LIST OF ALL THE CONNECTED SHADERS
+    //
+    for($i in DML_Range(0,$facecount,1) )
+    {
+        $shaders[$i] = `DML_CompShaderAssinment $Meshfaces[$i]`;
+    }
+    
+    $shaders = `stringArrayRemoveDuplicates $shaders`;
+    
+    //GET THE TOTAL NUMBER OF SHADERS FOR LATER USE
+    //
+    int $shader_Count = (`size($shaders)`);
+    
+    //ADD THE TOTAL NUMBER OF SHADERS INTO OUTPUT INT ARRAY
+    //
+    $return[`size $return`] = $shader_Count;
+    
+    //SAME AS ABOVE BUT WITH TOTAL NUMBER OF FACES
+    //
+    $return[`size $return`] = $facecount;
+    
+    int $i = $b = $add = 0;
+    
+    //SCAN THROUGH EACH FACE FOR THE OBJECT OF INTEREST USING THE $i VARAIBLE AS THE CURRENT FACE NUMBER
+    //
+    for($i in `DML_Range 0 $facecount 1` )
+    {
+        //GET THE CURRENT SHADER THAT IS ASSINED TO FACE $i
+        //
+        string $shaderperface = ` DML_CompShaderAssinment $Meshfaces[$i]`;
+        
+        //USING THE SHADER COUNT WE MADE EARLER DETERMAN WITCH ONE IT BELONGS TO 0
+        //BING THE FIRST SO FORTH AND SO ON THIS WILL MAKE SURE WE ARe CONSISTENT WITH THE
+        //ORDER IN WITCH THE SHADERS ARE OUTPUT IN THE FINALE DIRECT X FILE
+        //
+        for ($b in `DML_Range 0 $shader_Count 1`)
+        {
+            //COMPARE SHADER(#)TO THE THE SHADER ASSINED TO FACE(#)
+            //
+            if ($shaderperface == $shaders[$b])
+            {
+                //IF A MATCH IS FOUND ADD The NUMBER OF TIMES WE HAD TO CHECK TO Find It
+                //
+                $return[`size $return`] = ($b);
+                break;
+            }
+        }
+    }
+    
+    return $return;
+}

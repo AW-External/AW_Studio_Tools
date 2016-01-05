@@ -1,0 +1,18 @@
+global proc string GetIndex ( int $entry, string $array[] )
+{
+	int $size = `size $array`;
+	
+	if( $entry<0 )
+	{
+		$entry = $size + $entry;
+	}
+	
+	if( $entry>0 && $entry<$size )
+	{
+		return $array[$entry];
+	}
+	else
+	{
+		return $array[0];
+	}
+}

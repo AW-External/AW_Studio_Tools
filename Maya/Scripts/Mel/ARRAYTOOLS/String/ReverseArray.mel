@@ -1,0 +1,14 @@
+//reverses the order of an array
+global proc string[] ReverseArray( string $array[] )
+{
+	string $reversedArray[] = {};
+	
+	int $arraySize = `size $array`;
+
+	for( $n=0; $n<$arraySize; $n++ )
+	{
+		$reversedArray[( $arraySize-1-$n )] = $array[$n];
+	}
+		
+	return $reversedArray;
+}

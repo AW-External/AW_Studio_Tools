@@ -1,0 +1,8 @@
+global proc string DML_WorkSpace()
+{
+	DML_IsFileSaved;
+	
+	string $WorkSpace = toNativePath((`getenv "HOME"`+"/") + ("maya/") + ("DML_Extraction_Data/") + (`workspace -q -shortName`+"/"));
+    
+	return $WorkSpace;
+}

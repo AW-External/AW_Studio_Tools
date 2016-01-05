@@ -1,0 +1,11 @@
+//RETURN TRUE IF THE ITEM EXISTS IN THE ARRAY.
+global proc int FindInArray (string $item, string $array[])
+{
+	int $i= 0; 	
+	while( $i < size($array) )
+	{
+		if($item == $array[$i]){return $i;}
+		$i++;
+	}
+	return false;
+}

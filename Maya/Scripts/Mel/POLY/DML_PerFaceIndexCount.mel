@@ -1,0 +1,14 @@
+global proc int[] DML_PerFaceIndexCount()
+{
+    int $nVertsperface[];
+    int $i,$Counting = 0;
+    
+    for($i in DML_Range(0,(`DML_EvaluatePoly f`),1) )
+    {
+        string $convertshion[] = `polyListComponentConversion -fromFace -toVertex (".f["+$i+"]")`;
+        
+        $nVertsperface[$i] = size(`ls -flatten $convertshion`);
+    }
+    
+    return $nVertsperface;
+}

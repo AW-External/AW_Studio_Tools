@@ -1,0 +1,35 @@
+//------
+//orders the given string array based on an int array
+//example:
+//OrderArrayUsing { "a", "b", "c", "d" } { 3, 0, 1, 2 };
+//returns the result:
+// { "b", "c", "d", "a" };
+//------
+global proc string[] OrderArrayUsing( string $array[], int $orders[] )
+{
+	if( `size $array` != `size $orders` )
+		warning ("the given string array is a different size to the orders array - unwanted results may occur");
+		
+	string $orderedStr[] = {};
+	
+	//this is a copy of the given string array that will get modified 
+	//arrays are referenced so this is nessecary
+	//
+	string $arrayM[] = $array;
+	
+	int $ordersM[] = $orders;
+
+	while( `size $arrayM` && `size $ordersM` )
+	{
+		int $lowest = `zooGetLowestValueIdx_int $ordersM`;
+		
+		$orderedStr[( `size $orderedStr` )] = $arrayM[$lowest];
+		
+		$arrayM = `zooRemoveArrayIdx_str $arrayM $lowest`;
+		
+		$ordersM = `zooRemoveArrayIdx_int $ordersM $lowest`;
+		
+	}
+
+	return $orderedStr;
+	}

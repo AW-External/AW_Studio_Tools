@@ -1,0 +1,21 @@
+//Converts a Vector into a Float Array of xyzw Quaternion Rotation
+global proc float[] DML_QUAT(vector $Emuler)
+{
+	float $quatRot[] = {};
+	
+	float $x = deg_to_rad( $Emuler.x );
+	float $y = deg_to_rad( $Emuler.y );
+	float $z = deg_to_rad( $Emuler.z );
+	
+	float $chr,$chp,$chd,$shr,$shr,$shr;
+	
+	$chr = cos($x/2);  $shr = sin($x/2); // Radians of course 
+	$chp = cos($y/2);  $shp = sin($y/2);
+	$chd = cos($z/2);  $shd = sin($z/2);
+	
+	$quatRot[0]=-($chd*$chp*$shr-$shd*$shp*$chr);
+	$quatRot[1]=-($chd*$shp*$chr+$shd*$chp*$shr);
+	$quatRot[2]=-($shd*$chp*$chr-$chd*$shp*$shr);
+	$quatRot[3]=-($chd*$chp*$chr+$shd*$shp*$shr);
+	return $quatRot;
+}

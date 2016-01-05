@@ -1,0 +1,6 @@
+global proc int StringToInt (string $item)
+{
+    int $newvalue = $item;
+    
+    return $newvalue;
+}

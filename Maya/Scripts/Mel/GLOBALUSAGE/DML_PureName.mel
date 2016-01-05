@@ -1,0 +1,5 @@
+global proc string DML_PureName (string $node)
+{
+	string $name = match( "[a-zA-Z_0-9]+$",$node);
+	return $name;
+}

@@ -1,0 +1,48 @@
+//return a new array composed of the items that are not common to both arrays.
+global proc string[] ArrayDifference (string $array1[], string $array2[])
+{
+	string $x;
+	string $y;
+	string $newArray[];
+	string $flatArray[];
+	int $itemFound = 0;
+
+
+	//...find items in array1 that don't appear in array2
+	for ($x in $array1)
+	{
+		$itemFound = 0;
+		for ($y in $array2)
+		{
+			if ($x == $y) {$itemFound = 1;}
+		}
+		if ($itemFound == 0) {$newArray[size($newArray)] = $x;}
+	}
+
+
+	//...find items in array2 that don't appear in array1
+	for ($x in $array2)
+	{
+		$itemFound = 0;
+		for ($y in $array1)
+		{
+			if ($x == $y) {$itemFound = 1;}
+		}
+		if ($itemFound == 0) {$newArray[size($newArray)] = $x;}
+	}
+
+
+	//...flatten the result
+	$flatArray[0] = $newArray[0];
+	for ($x in $newArray)
+	{
+		$itemFound = 0;
+		for ($y in $flatArray)
+		{
+			if ($x == $y) {$itemFound = 1;}
+		}
+		if ($itemFound == 0) {$flatArray[size($flatArray)] = $x;}
+	}
+
+	return ($flatArray);
+}

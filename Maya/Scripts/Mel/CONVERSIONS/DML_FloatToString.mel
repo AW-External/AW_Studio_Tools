@@ -1,0 +1,22 @@
+global proc string DML_FloatToString(float $flt)
+{
+	string $str = $flt;
+	string $Dismal = `match "[\.]" $str`;
+	string $e = `match "e" $str`;
+	
+	if(`gmatch $Dismal "."`)
+	{
+		if(`gmatch $e "e"`)
+			return "0.0";
+		else
+			return $str;
+		
+	}
+	else if(!`gmatch $Dismal "."`)
+	{
+		if(`gmatch $e "e"`)
+			return "0.0";
+		else
+			return ($str+".0");
+	}
+}

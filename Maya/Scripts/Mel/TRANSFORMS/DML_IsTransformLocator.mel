@@ -1,0 +1,17 @@
+global proc int DML_IsTransformLocator ()
+{
+    string $TransformLocator[] = listTransforms("-type locator");
+    
+    int $i = 0;
+    
+    $item = DML_PureName(`DML_FirstSelected`);
+    
+    while( $i < size($TransformLocator) )
+    {
+	    string $item2 = DML_PureName($TransformLocator[$i++]);
+	    
+        if($item == $item2)
+            return true;
+    }
+    return false;
+}

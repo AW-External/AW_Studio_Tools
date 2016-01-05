@@ -1,0 +1,156 @@
+global proc DML_Icon_Maker (string $path, string $name, string $ext, int $setup)
+{
+
+        global string $LT_importPath;
+        global string $LT_tab3;
+        global string $LT_tabName;
+
+        global int $LT_tmpScriptJobID;
+
+        string $iconsSecondary = ($LT_importPath + "icons/");
+        string $iconsPrimary = ($path + "/icons/");
+
+        string $file = $name+"."+$ext;
+
+
+        if ($setup == 1) //for lighting and camera setup
+        {
+            //temporary lighting
+            directionalLight;
+            $lightName1 = `ls -sl`;
+            setAttr ($lightName1[0]+".rotateX") -27;
+            setAttr ($lightName1[0]+".rotateY") 15;
+            setAttr ($lightName1[0]+".rotateZ") 18;
+            $lightName1 = `pickWalk -d down`;
+            setAttr ($lightName1[0]+".intensity") 3.5;
+            setAttr ($lightName1[0]+".useDepthMapShadows") 1;
+            directionalLight;
+            $lightName2 = `ls -sl`;
+            setAttr ($lightName2[0]+".rotateX") -122;
+            setAttr ($lightName2[0]+".rotateY") -7;
+            setAttr ($lightName2[0]+".rotateZ") -66;
+            $lightName2 = `pickWalk -d down`;
+            setAttr ($lightName2[0]+".intensity") 1.2;
+            setAttr ($lightName2[0]+".useDepthMapShadows") 1;
+
+            //set panel
+            string $panelList[] = `getPanel -type modelPanel`;
+            for ($currentPanel in $panelList)
+                    modelEditor -edit -displayLights "all" -displayAppearance "smoothShaded" -displayTextures 1 -rendererName "base_OpenGL_Renderer" $currentPanel;
+
+            //setup camera
+            setAttr "perspShape.focalLength" 55;
+            setAttr "perspShape.backgroundColor" -type double3 0.75 0.75 0.75 ;
+            camera -e -filmFit "fill" -displayFilmGate off -displayResolution on -overscan 1.3 persp;
+
+            //select and frame meshes
+            string $meshList[] = `ls -typ mesh`;
+            select $meshList[0];
+            //Frame camera;
+            viewFit perspShape ;
+
+            /*
+            //Can be use to dolly camera closer
+            if (`getAttr persp.tx` < 5)
+                dolly -rel -d 0 persp;
+            if (`getAttr persp.tx` < 25)
+                dolly -rel -d (-`getAttr persp.tx` / 10) persp;
+            else if (`getAttr persp.tx` < 50)
+                dolly -rel -d (-`getAttr persp.tx` / 4) persp;
+            else if (`getAttr persp.tx` < 100)
+                dolly -rel -d (-`getAttr persp.tx` / 3) persp;
+            else
+                dolly -rel -d (-`getAttr persp.tx` / 2) persp;
+            */
+
+        }
+
+
+        //setup image
+        setAttr "defaultResolution.width" 40;
+        setAttr "defaultResolution.height" 40;
+        setAttr "defaultResolution.deviceAspectRatio" 1;
+        setAttr "defaultResolution.pixelAspect" 1;
+        setAttr "defaultRenderGlobals.imageFormat" 20;
+
+        //setup render quality
+        setAttr "hardwareRenderGlobals.enableHighQualityLighting" 1;
+        setAttr "hardwareRenderGlobals.enableAcceleratedMultiSampling" 1;
+        setAttr "hardwareRenderGlobals.numberOfSamples" 9;
+        setAttr "hardwareRenderGlobals.colorTextureResolution" 512;
+        setAttr "hardwareRenderGlobals.bumpTextureResolution" 1024;
+
+        //put bmp icon image in icons folder in same location as maya file
+        //if icons folder doesn't exist it will be created
+        setAttr -type "string" defaultRenderGlobals.imageFilePrefix ($iconsPrimary+$name);
+
+        //string $LTcurrentFileFull = ("/Objects/Static/icons/"+$LTcurrentFileFinalName+".bmp");
+        hwRender -fnp -cf -w 40 -h 40 -nrv -cam persp;
+        //or software render
+        //render -x 40 -y 40 persp;
+        sysFile -rename  ($iconsPrimary+$name+".bmp ") ($iconsPrimary+$name+"_tmp.bmp ");
+        print ("Rendered icon : " +$iconsPrimary + $name + ".bmp\n");
+
+        //refreshIcon
+        LT_UI ; tabLayout -edit -st $LT_tab3 $LT_tabName;
+
+        //Create HUDs for re-rendering icon
+        //
+        if (`headsUpDisplay -exists HUDIconRenButton`) headsUpDisplay -remove HUDIconRenButton;
+
+        headsUpDisplay -rp 2 1;
+        hudButton -s 2
+              -b 1
+              -vis 1
+              -l "Re-Render Icon"
+              -ba       "center"
+              -bw 140
+              -bsh "roundRectangle"
+              -rc ("LT_createIcon \"" + $path + "\" \"" + $name + "\"  \"" + $ext + "\" \"0\"")
+              HUDIconRenButton;
+
+        if (`headsUpDisplay -exists HUDIconInfo`) headsUpDisplay -remove HUDIconInfo;
+
+        headsUpDisplay -rp 2 2;
+        headsUpDisplay -s    2
+               -b        2
+               -ba       "center"
+               -dw       50
+               -label      "(Adjust camera and / or object and push button above to re-create icon if necessary)"
+               HUDIconInfo;
+
+        if (`headsUpDisplay -exists HUDKillIconRenButton`)    headsUpDisplay -remove HUDKillIconRenButton;
+
+        headsUpDisplay -rp 7 2;
+        hudButton -s 7
+              -b 2
+              -vis 1
+              -l "Done"
+              -ba       "center"
+              -bw 60
+              -bsh "rectangle"
+              -rc "headsUpDisplay -remove HUDIconRenButton; headsUpDisplay -remove HUDKillIconRenButton; headsUpDisplay -remove HUDIconInfo; camera -e -displayFilmGate off -displayResolution off persp"
+              HUDKillIconRenButton;
+
+
+        //Create scriptJob for killing HUD with file new or file open
+        //first check for existing scriptJob
+        int $exists = 0;
+        string $lastJob;
+        // get list of script jobs
+        $jobList = `scriptJob -lj`;
+        for ($lastJob in $jobList)
+        {
+            // check for HUDIconRenButton
+            string $match = match("HUDIconRenButton",$lastJob);
+            if ($match == "HUDIconRenButton")
+                {
+                $exists = 1;
+                break;
+                }
+        }
+
+        //create scriptJob to kill with new scene or open scene
+        if ($exists == 0) $LT_tmpScriptJobID = `scriptJob -runOnce true -ct "flushingScene" "if (`headsUpDisplay -exists HUDIconRenButton`) headsUpDisplay -remove HUDIconRenButton; if (`headsUpDisplay -exists HUDKillIconRenButton`) headsUpDisplay -remove HUDKillIconRenButton; if (`headsUpDisplay -exists HUDIconInfo`) headsUpDisplay -remove HUDIconInfo ; $LT_tmpScriptJobID = 0"`;
+
+}

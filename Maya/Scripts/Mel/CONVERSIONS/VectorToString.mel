@@ -1,0 +1,4 @@
+global proc string VectorToString (vector $v)
+{
+	return (("<<")+(`FloatToString ($v.x)`)+(",")+(`FloatToString ($v.y)`)+(",")+(`FloatToString ($v.z)`)+(">>"));
+}

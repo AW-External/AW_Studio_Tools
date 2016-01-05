@@ -1,0 +1,18 @@
+global proc int DML_EvaluatePoly (string $item)
+{
+    switch ($item)
+    {
+	    case "v":
+	        int $return[] = `polyEvaluate -vertex`;
+	    return $return[0];
+	
+	    case "f":
+	        int $return[] = `polyEvaluate -face`;
+	    return $return[0];
+	
+	    case "uv":
+	        int $return[] = `polyEvaluate -uv`;
+	    return $return[0];
+    }
+    return 0;
+}

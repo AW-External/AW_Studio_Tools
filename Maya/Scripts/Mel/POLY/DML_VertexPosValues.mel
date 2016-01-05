@@ -1,0 +1,16 @@
+global proc vector[] DML_VertexPosValues()
+{
+    int $add=$i=$j=$k=0;
+    int $PerFace_Count[] = `DML_PerFaceIndexCount`;
+    int $Extraction_Order[] = `DML_ReversedVertexWinding`;
+    
+    vector $Location[400];
+
+    for($i in $Extraction_Order )
+    {
+            vector $XYZ = pointPosition (".vtx["+$i+"]");
+            
+            $Location[$add++] = $XYZ;
+    }
+    return $Location;
+}

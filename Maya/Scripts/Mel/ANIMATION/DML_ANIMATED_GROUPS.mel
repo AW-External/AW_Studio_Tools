@@ -1,0 +1,23 @@
+global proc string[] DML_ANIMATED_GROUPS()
+{
+	string $group,$Animated_Groups[];
+	
+	string $Groups[] = `DML_Groups`;
+	
+	//Scan Through All The Joints
+	//
+	for($group in $Groups)
+	{
+		//Check To see If The Current Joint Has Animation
+		//
+		if(keyframe("-query","-keyframeCount",$group))
+		{
+			//Add it To the Final List
+			//
+			$Animated_Groups[size($Animated_Groups)] = $group;
+		}
+	}
+	//Outputs A list Off All joints With Animation
+	//
+	return $Animated_Groups;
+}

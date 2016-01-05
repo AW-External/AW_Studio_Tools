@@ -1,0 +1,4 @@
+global proc string GetChar (string $item, int $position)
+{
+	return `substring $item $position $position`;
+}

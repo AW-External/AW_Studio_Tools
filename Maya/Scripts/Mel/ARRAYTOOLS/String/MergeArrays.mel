@@ -1,0 +1,37 @@
+//Action: 				this one will return a new array composed only of
+//						unique items from the supplied array.
+//
+//Examples:
+//						$fatArray = {"blue", "blue", "red", "green", "blue", "green"};
+//						flattenStringArray $fatArray;
+//						// Result: blue red green //
+
+
+
+global proc string[] MergeArrays (string $array1[], string $array2[])
+{
+	string $x;
+	string $y;
+	string $newArray[];
+	int $itemFound = 0;
+
+	//...add the two arrays together
+	for ($x in $array2)
+	{
+		$array1[size($array1)] = $x;
+	}
+
+	//flatten the result
+	$newArray[0] = $array1[0];
+	for ($x in $array1)
+	{
+		$itemFound = 0;
+		for ($y in $newArray)
+		{
+			if ($x == $y) {$itemFound = 1;}
+		}
+		if ($itemFound == 0) {$newArray[size($newArray)] = $x;}
+	}
+
+	return ($newArray);
+}

@@ -1,0 +1,44 @@
+global proc float[] DML_MOD_KEYTIMES (float $Keys[])
+{
+	global float $G_Start,$G_End;
+	
+	int $i;
+	
+	float $Return[];
+	
+	$Return[0] =  $G_Start;
+	
+	for ($i=0; $i<`size $Keys`; $i++)
+	{
+		//Round To the Nearest Hole Number
+		//
+		$Keys[$i] = floor($Keys[$i] + 0.5);
+        
+		int $add = on;
+		
+		float $FKey;
+		
+		//Check To See if The Key not a Dub
+		//
+		for($FKey in $Return)
+		{
+			if(($Keys[$i] == $FKey)||($Keys[$i] == $G_Start)||($Keys[$i] == $G_End))
+            {
+				$add = off;
+            }
+		}
+		
+		if($add)
+		{
+			//Add it To the Finle Output list
+			//
+			$Return[size($Return)] = $Keys[$i];
+		}
+	}
+	
+	$Return[size($Return)] = $G_End;
+	
+	$Return = sort($Return);
+	
+	return $Return;
+}

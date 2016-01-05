@@ -1,0 +1,15 @@
+global proc int DML_IsOrphan ()
+{
+    string $Orphans[] = DML_Orphans();
+    
+    string $item = DML_PureName(`DML_FirstSelected`);
+    int $i = 0;
+    
+    while( $i < size($Orphans) )
+    {
+        string $item2 = DML_PureName($Orphans[$i++]);
+        if($item == $item2)
+            return true;
+    }
+    return false;
+}

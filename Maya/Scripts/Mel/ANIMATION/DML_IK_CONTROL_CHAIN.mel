@@ -1,0 +1,47 @@
+global proc  string[] DML_IK_CONTROL_CHAIN ()
+{
+    string $joints[6],$Controled[];
+    
+    //Get The Joint That this Ik handle was First Attached to
+    //
+    $Controled = `listConnections -type joint`;
+    
+    //Define The first joint
+    //
+    string $startJoint = $Controled[0];
+    
+    //Get The Ik End Effector That the given Ik handle is attached to
+    //
+    $Controled = `listConnections -type ikEffector`;
+    
+    //Use The new End Effector To Get The last joint that is under control of the ik handle
+    //
+    $Controled = `listConnections -type joint $Controled[0]`;
+    
+    //Difine The Last Joint
+    //
+    string $endJoint = `shortNameOf(firstParentOf($Controled[0]))`;
+    
+    //Add The First Joint To our return list
+    //
+    $joints[0] = $startJoint;
+    
+    //Scan from StratJoint Down until we reach the EndJiont
+    //
+    while(!`isSameObject $startJoint $endJoint`)
+    {
+        //Get The Childern Of The Start Joint
+        //
+        $Controled = `listRelatives -type joint $startJoint`;
+        
+        //The Child now Becoumes a parent
+        //
+        $startJoint =  $Controled[0];
+        
+        //Add To returnlist
+        //
+        $joints[`size $joints`] = $startJoint;
+    }
+    
+    return $joints;
+}

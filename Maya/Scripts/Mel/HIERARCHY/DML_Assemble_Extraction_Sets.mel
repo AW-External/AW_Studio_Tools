@@ -1,0 +1,130 @@
+proc Open_Assembly_File (string $Name)
+{
+    global int $G_Assembly_id;
+    
+    string $Args = (" -get -a -item "+$Name);
+    
+    $G_Assembly_id = `fopen (DML_FileDirectoryOps($Args)) "w"`;
+}
+
+proc Close_Assembly_File ()
+{
+    global int $G_Assembly_id;
+    
+    fclose $G_Assembly_id;
+}
+
+proc Write_To_Assembly_File (string $Str)
+{
+    global int $G_Assembly_id;
+    
+    fprint $G_Assembly_id $Str;
+}
+
+proc OutPut_Assembly_Item(string $Item, string $type)
+{
+    global int $Deph;
+    
+	Write_To_Assembly_File ("Open "+$Deph+" "+$type+" "+$Item+"\n");
+}
+
+proc Close_Assembly_Item()
+{
+    global int $Deph;
+    
+	Write_To_Assembly_File ("Close "+$Deph+"\n");
+    
+}
+
+proc Assemble (string $Parent)
+{
+	global int $Deph;
+    
+    string $Childern[] = `listRelatives -fullPath -type transform $Parent`;
+	   
+	if((`DML_IsMesh $Parent`)||(`DML_IsLocator $Parent`)||(`DML_IsGroup $Parent`))
+	{
+		if(`DML_IsMesh $Parent`)
+		{         
+            OutPut_Assembly_Item(`DML_PureName $Parent`,"Transform");
+            
+            $Deph++;
+            
+            OutPut_Assembly_Item((DML_PureName(`DML_ChildShape $Parent`)),"Mesh");
+            
+            Close_Assembly_Item;
+            
+            $Deph--;
+            
+		}
+		else if(`DML_IsGroup $Parent`)
+		{
+            OutPut_Assembly_Item(`DML_PureName $Parent`,"Transform");
+		}
+		else if(`DML_IsLocator $Parent`)
+		{
+            OutPut_Assembly_Item(`DML_PureName $Parent`,"Transform");
+		}
+
+        for ($Parent in $Childern)
+        {
+            $Deph++;
+        	Assemble $Parent;
+            $Deph--;
+        }
+        Close_Assembly_Item;
+	}
+}
+
+proc Scan_Assemblie (string $Parent)
+{
+	global int $Deph;
+    
+    $Deph = 0;
+    
+    string $Parent;
+	
+	string $Childern[] = `listRelatives -fullPath -type transform $Parent`;
+	
+	for ($Parent in $Childern)
+	{
+		Assemble $Parent;
+	}
+	
+}
+
+global proc DML_Assemble_Data()
+{
+	global int $Deph;
+	
+	//DML_Reorder;
+	
+	//USEING A SPACIFIC NAMING CONVENCHION
+	//THIS MAKES A LIST OF MASTER GROUPS
+	//THAT WILL BE EXPORTERED
+	string $Export_Groups[] = (`ls "Export_Group_*"`);
+	
+	//COUNTS HOW MANY MASTER EXPORT GROUPS ARE IN THE SCENE
+	int $i,$Total = size($Export_Groups);
+	
+	string $FileNames[];
+	
+	//STARTS THE SCANING PROSSESS FOR EACH MASTER EXPORT GROUP
+	for ($i in `DML_Range 0 $Total 1`)
+	{
+		$Deph = 0;
+				
+		string $FileName =  (substring($Export_Groups[$i],`size "Export_Group__"`,`size $Export_Groups[$i]`));
+		
+		$FileNames[$i] = $FileName;
+		
+		print ($FileName+"\n");
+		
+		Open_Assembly_File $FileName;
+		
+		Scan_Assemblie $Export_Groups[$i];
+		
+		Close_Assembly_File;
+	}
+}
+

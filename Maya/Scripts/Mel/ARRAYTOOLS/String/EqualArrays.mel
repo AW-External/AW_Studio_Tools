@@ -1,0 +1,14 @@
+global proc int EqualArrays( string $array1[], string $array2[] )
+{
+	int $size1 = `size $array1`;
+	int $size2 = `size $array2`;
+
+	if( $size1 != $size2 )
+		return 0;
+		
+	for( $n=0; $n<$size1; $n++ )
+		if( $array1[$n] != $array2[$n] )
+			return 0;
+			
+	return 1;
+}

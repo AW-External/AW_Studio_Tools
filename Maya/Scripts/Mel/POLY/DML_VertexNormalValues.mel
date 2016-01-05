@@ -1,0 +1,19 @@
+global proc vector[] DML_VertexNormalValues()
+{
+    int $add=$i=$j=$k=0;
+    int $PerFace_Count[] = `DML_PerFaceIndexCount`;
+    int $Extraction_Order[] = `DML_ReversedVertexWinding`;
+    
+    vector $Normals[400];
+
+    for($i in DML_Range(0,(`DML_EvaluatePoly f`),1) )
+    {
+        for($j in `DML_Range 0 $PerFace_Count[$i] 1`)
+        {
+            vector $XYZ = `polyNormalPerVertex -query -normalXYZ (".vtxFace["+$Extraction_Order[$k++]+"]["+$i+"]")`;
+            
+            $Normals[$add++] = <<($XYZ.x*-1),($XYZ.y*-1),(($XYZ.z*-1))>>;
+        }
+    }
+    return $Normals;
+}

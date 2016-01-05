@@ -1,0 +1,24 @@
+global proc string DML_ChildShape(string $Transform)
+{
+    
+    //CHECKS TO SEE IF 
+    //CHILD SHAPES ARE PRESENT
+    if(size(`listRelatives -children -shapes -fullPath $Transform`))
+    {
+        //GETS THE FULLPATH NAME 
+        //OF THE FIRST GENERATION OF CHILDERN
+        string $shape[] = `listRelatives -children -shapes -fullPath $Transform`;
+        
+        //RETURNES ONLY THE 
+        //FIRST CHILD
+        return $shape[0];
+    }
+    else
+    {
+        //IF THERE IS NO SHAPE CONNTECED 
+        //TO THIS TRANSFORM 
+        //RETURN THE WORD NONE INSTEAD OF AN
+        //EMPTY STRING FOR PARSING LATER
+        return "none";
+    }
+}

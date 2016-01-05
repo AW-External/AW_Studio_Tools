@@ -1,0 +1,4 @@
+global proc string PopFirstChar (string $item)
+{
+	return `substring $item 2 (size($item))`;
+}

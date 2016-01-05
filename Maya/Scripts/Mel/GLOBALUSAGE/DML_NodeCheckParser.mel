@@ -1,0 +1,31 @@
+global proc int DML_NodeCheckParser(string $Args)
+{
+    global string $G_DML_ArgReturn[];
+	global string $G_DML_StrReturn[];
+	global float  $G_DML_FltReturn[];
+	clear $G_DML_ArgReturn;
+	clear $G_DML_StrReturn;
+	clear $G_DML_FltReturn;
+    
+    string $searchStr = ",";
+    string $replaceStr = " ";
+    string $SplitArgs[];
+	
+    //Check to see if Any arguments were passed
+    //
+    if(!`size $Args`)
+        error -showLineNumber 1 "At lest on flag mush be passed To DML_NodeCheckParser";
+        
+    $Args = `substituteAllString $Args " " ""`;
+        
+    tokenize $Args $SplitArgs;
+    
+    string $Flags = `substituteAllString $SplitArgs[0] "-" " "`;
+    string $Nodes = `substituteAllString $SplitArgs[1] "-" " "`;
+        
+    int $Flagcount = `tokenize $Flags $G_DML_ArgReturn`;
+    
+    int $Nodecount = `tokenize $Nodes $G_DML_StrReturn`;
+    
+    return $Flagcount;
+}

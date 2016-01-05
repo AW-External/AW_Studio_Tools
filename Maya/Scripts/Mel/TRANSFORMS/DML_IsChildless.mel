@@ -1,0 +1,15 @@
+global proc int DML_IsChildless ()
+{
+    string $Childless[] = DML_Childless();
+    string $item = `DML_FirstSelected`;
+    $item = `longNameOf $item`;
+    int $i = 0;
+    while( $i < size($Childless) )
+    {
+	    string $item2 = `longNameOf $Childless[$i++]`;
+	     
+        if($item==$item2)
+            return true;
+    }
+    return false;
+}

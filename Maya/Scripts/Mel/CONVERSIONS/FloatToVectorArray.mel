@@ -1,0 +1,37 @@
+global proc int FloatToVectorArray (float $FloatArray[],vector $VectorArray[], int $numberToCopy)
+{
+	if(`size $FloatArray`)
+	{
+		float $Copy[] = $FloatArray;
+		clear $FloatArray;clear $VectorArray;
+		
+		if (!$numberToCopy)
+			$numberToCopy = (`size $Copy`/3);
+		
+		int $i = ($numberToCopy);
+		int $j = 0;
+		
+		while($i<(`size $Copy`/3))
+		{
+			$FloatArray[$j] = $Copy[$j++];
+			$FloatArray[$j] = $Copy[$j++];
+			$FloatArray[$j] = $Copy[$j++];
+			$i++;
+		}
+		
+		int $i = 0;
+		int $j = 0;
+		
+		while($i<$numberToCopy)
+		{
+			float $xyz[] =  {$Copy[$j++],$Copy[$j++],$Copy[$j++]};
+			
+			$VectorArray[$i++] = `FloatToVector $xyz`;
+		}
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}

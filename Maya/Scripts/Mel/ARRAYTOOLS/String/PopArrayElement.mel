@@ -1,0 +1,17 @@
+global proc string PopArrayElement( string $array[], int $index)
+{
+	int $i,$j,$len = `size $array`;
+	
+	string $copy[] = $array;
+
+	clear $array;
+	
+	string $return = $copy[$index];
+
+	for ($i=0 , $j=0 ; $i<$len ; $i++ )
+	{
+		if ($i != $index)
+			$array[$j++] = $copy[$i];
+	}	
+	return $return;
+}

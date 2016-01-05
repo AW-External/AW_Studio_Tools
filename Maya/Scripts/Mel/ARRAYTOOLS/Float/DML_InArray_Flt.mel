@@ -1,0 +1,11 @@
+//RETURN TRUE IF THE ITEM IS FOUND
+global proc int DML_InArray_Flt (float $item, float $array[])
+{
+	int $i = 0;
+	while($i< in size($array))
+	{
+		if ($item == $array[$i]){return true;}
+	}
+
+	return false;
+}

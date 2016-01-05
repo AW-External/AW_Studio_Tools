@@ -1,0 +1,11 @@
+global proc DBSL()
+{
+global string $gCommandExecuterTabs;
+string $array[] = `tabLayout -q -ca $gCommandExecuterTabs`;
+int $selTabIdx = `tabLayout -q -selectTabIndex $gCommandExecuterTabs` - 1;
+string $curFormLayout = $array[$selTabIdx];
+string $tabChldrn[] = `formLayout -q -ca $curFormLayout`;
+string $curExecuter = $tabChldrn[0];
+string $ktPrintSel=`cmdScrollFieldExecuter -q -slt $curExecuter`;
+eval ("print " + $ktPrintSel);
+}

@@ -1,0 +1,13 @@
+global proc string[] NewArrayFromIdexingOrder( string $array[], int $Ordering[])
+{
+	string $newArray[];
+	int $i;
+	int $add = 0;
+	for($i in $Ordering)
+	{
+		if($i!=-1)
+		$newArray[$add++] = $array[$i];
+	}
+
+	return $newArray;
+}

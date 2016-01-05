@@ -1,0 +1,18 @@
+global proc string DML_SelectedChildShapeType(string $Transform)
+{
+    if(`DML_SelectedChildShape` == "none")
+    {
+        //IF THE WORD NONE IS FOUND 
+        //THEN THERE WAS NO SHAPE 
+        //SO FOR PARSING PURPUSES 
+        //WE WILL INPUT THE WORD GROUP
+        return "none";
+    }
+    else
+    {
+        
+        //GET THE NODE TYPE OF 
+        //THE GIVEN SHAPE
+        return (objectType(`DML_SelectedChildShape`));
+    }
+}

@@ -1,0 +1,32 @@
+global proc int[] DML_ReverseWithin (int $list[],int $sets[])
+{
+    int $return[]; clear $return;
+    int $listsize = size($list);
+    int $SET_Count = size($sets);
+    int $start_stops[];
+    clear $start_stops;
+    int $itarator;
+    int $itarator2;
+    for ($itarator in `DML_Range 0 ($SET_Count) 1`)
+    {
+        if ($itarator>$listsize)
+        {
+            break;    
+        }
+        $start_stops[$itarator+1] = $start_stops[$itarator]+$sets[$itarator];
+    }
+
+    int $I=0;
+
+    for ($itarator in `DML_Range 0 ($SET_Count) 1`)
+    {    
+        for ($itarator2 in `DML_ReverseRange $start_stops[$itarator] $start_stops[$itarator+1] 1`)
+        {
+            $return[$I++] = $list[$itarator2];
+        }
+    }
+    
+    $list = $return;
+    
+    return $list;
+}

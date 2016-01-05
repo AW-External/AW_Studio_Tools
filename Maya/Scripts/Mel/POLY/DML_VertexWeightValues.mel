@@ -1,0 +1,119 @@
+proc string BindPose (string $JoinName)
+{
+    float $BindMatrix[] = `getAttr ($JoinName+".bindPose")`;
+    string $Return[];
+    FloatToStringArray $Return $BindMatrix 0;
+    return `MakeCommaSeperated $Return`;
+}
+
+
+proc string[] SkinClusters (string $MeshName)
+{
+    string $SkinClusters[];
+    
+    // GET THE HISTORY OF THE Obj
+    //
+    string $H,$History[] = `listHistory  -pruneDagObjects 1 -interestLevel 2 $MeshName`;
+    
+    // Search For Skinning Modifiers
+    //
+    for ($H in $History)
+    {
+        // Determan What kind Of History Node it is
+        //
+        string $type = `nodeType $H`;
+        
+        if (`gmatch $type "skinCluster"`)
+        {
+            // ADD IT TO A COLLECTION
+            //
+            $SkinClusters[`size $SkinClusters`] = $H;
+        }
+    }
+    return $SkinClusters;
+}
+
+proc string[] JointWeights (string $MeshName, string $JoinName, string $SkinName, int $VertCount,int $Extraction_Order[])
+{
+    int $index;
+    float $Weights[];
+    string $BinaryReturn[];
+    string $OrderedReturn[];
+    string $IndexingReturn[];
+    // scan through the all Vertex indices
+    //
+    for($index = 0; $index < $VertCount; $index++)
+    {
+        // GET the current index weighted influence
+        //
+        $Weights[$index] = `skinPercent -transform $JoinName -q $SkinName ($MeshName + ".vtx[" + $index + "]")`;
+    }
+    
+    BinaryFloatToStringArray($BinaryReturn,$Weights,"0:0","0:0");
+    
+    $OrderedReturn = `NewArrayFromIdexingOrder $BinaryReturn $Extraction_Order`;
+    
+    int $nIndex = `size $OrderedReturn`;
+    
+    string $OptimizedWeights[];
+    
+    for($index = 0; $index < $nIndex; $index++)
+    {
+        // GET the current index weighted influence
+        //
+        if($OrderedReturn[$index] != "0.0")
+        {
+            $OptimizedWeights[`size $OptimizedWeights`] = $OrderedReturn[$index];
+            $IndexingReturn[`size $IndexingReturn`] = $index;
+        }
+    }
+    
+    int $nIndex = `size $IndexingReturn`;
+    
+    return {(`IntToString $nIndex`),(`MakeCommaSeperated $IndexingReturn`),(`MakeCommaSeperated $OptimizedWeights`)};
+}
+
+global proc string DML_VertexWeightValues()
+{
+    string $MeshName = `DML_FirstSelected`;
+    
+    int $VertCount = `DML_EvaluatePoly "v"`;
+    
+    int $Extraction_Order[] = `DML_ReversedVertexWinding`;
+    
+    string $SkinName,$SkinClusters[] = `SkinClusters $MeshName`;
+    
+    string $CompondJointValues = "";
+    string $CompondWeightData = "";
+    string $CompondIndexCountValues = "";
+    string $CompondIndexData = "";
+    string $CompondBindPoseData = "";
+    string $JointCount = "";
+    string $ComplexCompondReturn = "";
+    
+    
+    // SCAN THROUGH THE SKINING MODIFIRES
+    //
+    for ($SkinName in $SkinClusters)
+    {
+        // THE LIST OF JOINTS THAT ARE INVALVED WITH THE CURRENT SKIN CLUSTER
+        //
+        string $JointName,$Joints[] = `skinCluster -q -weightedInfluence $SkinName`;
+        
+        $JointCount = `IntToString (size($Joints))`;
+        
+        // SCAN THROUGH ALL THE INVALVED JOINTS
+        //
+        for($JointName in $Joints)
+        {
+            string $CompondArrayData[] = (`JointWeights $MeshName $JointName $SkinName $VertCount $Extraction_Order`);
+            $CompondJointValues += ($JointName+";");
+            $CompondIndexCountValues += ($CompondArrayData[0]+";");
+            $CompondIndexData += ($CompondArrayData[1]+";");
+            $CompondWeightData +=($CompondArrayData[2]+";");
+            $CompondBindPoseData += (`BindPose $JointName`+";");
+        }
+    }
+    
+    return ($JointCount+":"+$CompondJointValues+":"+$CompondIndexCountValues+":"+$CompondIndexData+":"+$CompondWeightData+":"+$CompondBindPoseData);
+}

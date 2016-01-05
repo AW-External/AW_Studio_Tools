@@ -1,0 +1,21 @@
+//removes all adjacent duplicate entries from an array
+global proc string[] RemoveAdjDup( string $array[] ) 
+{
+	string $returnArray[] = {};
+	
+	string $prevVal = $array[0];
+
+	$returnArray[0] = $array[0];
+	
+	for( $n=1; $n < `size $array`; $n++ )
+	{
+		if( $prevVal != $array[$n] )
+		{
+			$returnArray[( `size $returnArray` )] = $array[$n];
+			
+			$prevVal = $array[$n];
+		}
+
+	return $returnArray;
+	}
+}

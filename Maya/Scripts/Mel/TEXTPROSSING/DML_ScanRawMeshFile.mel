@@ -1,0 +1,356 @@
+proc string Directory ()
+{
+    string $Dir = ("C:/Documents and Settings/Drew Loveridge/My Documents/maya/DML_Extraction_Data/PM_Assets/Cube/Meshs/Mesh.txt");
+    
+    return $Dir;
+}
+
+proc Open_file ()
+{
+    global int $Raw_id;
+    
+    string $File = (`Directory`);
+    
+    $Raw_id = `fopen $File "r"`;
+    
+    if((size(`fgetline $Raw_id`)))
+    {
+        frewind $Raw_id;
+    }
+    else
+    {
+        fclose $Raw_id;
+        error("The Raw File Did Not Appear To Open Properly "+$File);
+    }
+}
+
+proc string NameCheck(string $line)
+{
+    global int $Raw_id;
+    
+    if(`gmatch $line "Name"`)
+    {
+        print ("Mesh "+ `fgetword $Raw_id` + " {\n");
+        string $Return = (strip(`fgetline $Raw_id`));
+        return $Return;
+    }
+    return $line;
+}
+
+proc string IndexScanner()
+{
+    global int $Raw_id;
+    
+    int $i,$j,$Nindices = StringToInt(`fgetword $Raw_id`);
+    
+    print ($Nindices+";\n");
+    
+    for($i=1;$i<$Nindices;$i++){
+    
+        $j = StringToInt(`fgetword $Raw_id`);
+        
+        print ($j+";");
+        
+        while($j>1){
+        
+            print (`fgetword $Raw_id`+",");
+            
+            $j--;
+        }
+        print (`fgetword $Raw_id`+";,\n");
+    }
+    
+    $j = StringToInt(`fgetword $Raw_id`);
+    
+    print ($j+";");
+    
+    while($j>1){
+    
+        print (`fgetword $Raw_id`+",");
+        
+        $j--;
+    }
+    
+    print (`fgetword $Raw_id`+";;\n");
+    
+    string $Return = (strip(`fgetline $Raw_id`));
+    
+    return $Return;
+}
+
+proc string IndexingCheck(string $line)
+{
+    if(`gmatch $line "Indexing"`)
+    {
+        return `IndexScanner`;
+    }
+    return $line;
+}
+
+proc string VertexScanner()
+{
+    global int $Raw_id;
+    
+    int $i,$Nverts = StringToInt(`fgetword $Raw_id`);
+    
+    print ($Nverts+";\n");
+    
+    for($i=1;$i<$Nverts;$i++)
+        print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";,\n");
+    
+    print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";;\n");
+    
+    string $Return = (strip(`fgetline $Raw_id`));
+    
+    return $Return;
+}
+
+proc string VertCheck(string $line)
+{
+    if(`gmatch $line "Vertices"`)
+    {
+        $line =  `VertexScanner`;
+        $line = `IndexingCheck $line`;
+    }
+    return $line;
+}
+
+proc string NormalsScanner()
+{
+    global int $Raw_id;
+    
+    int $i,$Nverts = StringToInt(`fgetword $Raw_id`);
+    
+    print ($Nverts+";\n");
+    
+    for($i=1;$i<$Nverts;$i++)
+        print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";,\n");
+    
+    print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";;\n");
+    
+    string $Return = (strip(`fgetline $Raw_id`));
+    
+    return $Return;
+}
+
+proc string NormCheck(string $line)
+{
+    global int $Raw_id;
+    
+    if(`gmatch $line "Normals"`)
+    {
+        print "MeshNormals {\n";
+        $line = `NormalsScanner`;
+        $line = `IndexingCheck $line`;
+        print "}\n";
+    }
+    return $line;
+}
+
+proc string ColorScanner()
+{
+    global int $Raw_id;
+    
+    int $i,$Ncolors = StringToInt(`fgetword $Raw_id`);
+    
+    print ($Ncolors+";\n");
+    
+    for($i=1;$i<$Ncolors;$i++)
+        print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";;,\n");
+    
+    print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";;;\n");
+    
+    string $Return = (strip(`fgetline $Raw_id`));
+    
+    return $Return;
+}
+
+proc string ColorCheck(string $line)
+{
+    if(`gmatch $line "Vertex_Colors"`)
+    {
+        print "MeshVertexColors {\n";
+        $line =  `ColorScanner`;
+        print "}\n";
+    }
+    return $line;
+}
+
+proc string TextureScanner()
+{
+    global int $Raw_id;
+    
+    int $i,$Nuvs = StringToInt(`fgetword $Raw_id`);
+    
+    print ($Nuvs+";\n");
+    
+    for($i=1;$i<$Nuvs;$i++)
+        print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";,\n");
+    
+    print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";;\n");
+    
+    string $Return = (strip(`fgetline $Raw_id`));
+    
+    return $Return;
+}
+
+proc string TextureCheck(string $line)
+{
+    if(`gmatch $line "Texture_Coords"`)
+    {
+        print "MeshTextureCoords {\n";
+        $line = `TextureScanner`;
+        print "}\n";
+    }
+    return $line;
+}
+
+proc string IDScanner()
+{
+    global int $Raw_id;
+    
+    int $i,$Nids = StringToInt(`fgetword $Raw_id`);
+    
+    print (`fgetword $Raw_id`+";\n");
+    print (`fgetword $Raw_id`+";\n");
+    
+    for($i=3;$i<$Nids;$i++)
+        print (`fgetword $Raw_id`+",\n");
+        
+    print (`fgetword $Raw_id`+";\n");
+    
+    string $Return = (strip(`fgetline $Raw_id`));
+    
+    return $Return;
+}
+
+proc string MaterialScanner()
+{
+    global int $Raw_id;
+    
+    int $i,$Nmaterial = StringToInt(`fgetword $Raw_id`);
+    
+    for($i=0;$i<$Nmaterial;$i++)
+    {
+        print ("Material "+`fgetword $Raw_id`+" {\n");
+        print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";;\n");
+        print (`fgetword $Raw_id`+";\n");
+        print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";;\n");
+        print (`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";"+`fgetword $Raw_id`+";;\n");
+        
+        string $Texture = `fgetword $Raw_id`;
+        
+        if($Texture!="None")
+        {
+            print "TextureFilename {\n";
+            print ("\"");
+            print (" "+$Texture+"; ");
+            print ("\"");
+            print "\n}\n";
+        }
+        
+        print "}\n";
+    }
+    
+    string $Return = (strip(`fgetline $Raw_id`));
+    
+    return $Return;
+}
+
+proc string MaterialCheck(string $line)
+{
+    if(`gmatch $line "Materials"`)
+    {
+        $line = `MaterialScanner`;
+    }
+    return $line;
+}
+
+proc string IDCheck(string $line)
+{
+    if(`gmatch $line "Material_IDs"`)
+    {
+        print "MeshMaterialList {\n";
+        $line = `IDScanner`;
+        $line = `MaterialCheck $line`;
+        print "}\n";
+    }
+    return $line;
+}
+
+proc string SkinScanner()
+{
+    global int $Raw_id;
+    
+    int $i,$j,$k;
+    
+    int $JointCount = StringToInt(`fgetword $Raw_id`);
+    
+    for($i=0;$i<$JointCount;$i++)
+    {
+        print ("SkinWeights {\n");
+        print ("\" ");
+        print (`fgetword $Raw_id`);
+        print (" \";\n");
+        
+        int $indexCount = StringToInt(`fgetword $Raw_id`);
+        
+        print ($indexCount+";\n");
+        
+        for($j=1;$j<$indexCount;$j++)
+            print (`fgetword $Raw_id`+",\n");
+            
+        print (`fgetword $Raw_id`+";\n");
+            
+        for($j=1;$j<$indexCount;$j++)
+            print (`fgetword $Raw_id`+",\n");
+            
+        print (`fgetword $Raw_id`+";\n");
+        
+        for($j=1;$j<16;$j++)
+            print (`fgetword $Raw_id`+",");
+            
+        print (`fgetword $Raw_id`+";\n"); 
+        
+        print ("}\n");
+    }
+    
+    string $Return = (strip(`fgetline $Raw_id`));
+    
+    return $Return;
+}
+
+proc string SkinCheck(string $line)
+{
+    if(`gmatch $line "SkinWeights"`)
+    {
+        $line = `SkinScanner`;
+    }
+    return $line;
+}
+
+proc Close_file()
+{
+    global int $Raw_id;
+    
+    $Raw_id = `fclose $Raw_id`;
+}
+
+global proc DML_RawFileOps()
+{
+    Open_file;
+    global int $Raw_id;
+    scriptEditorInfo -ch;
+    string $line = (strip(`fgetline $Raw_id`));
+    
+    $line = NameCheck($line);
+    $line = VertCheck($line);
+    $line = NormCheck($line);
+    $line = ColorCheck($line);
+    $line = TextureCheck($line);
+    $line = IDCheck($line);
+    $line = MaterialCheck($line);
+    $line = SkinCheck($line);
+    print "}\n";
+    Close_file;
+}

@@ -1,0 +1,21 @@
+global proc string[] FlattenArray (string $array[])
+{
+	string $x;
+	string $y;
+	string $newArray[];
+	int $itemFound = 0;
+
+
+	$newArray[0] = $array[0];
+	for ($x in $array)
+	{
+		$itemFound = 0;
+		for ($y in $newArray)
+		{
+			if ($x == $y) {$itemFound = 1;}
+		}
+		if ($itemFound == 0) {$newArray[size($newArray)] = $x;}
+	}
+
+	return ($newArray);
+}

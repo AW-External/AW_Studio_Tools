@@ -1,0 +1,5 @@
+global proc string GetFirstChar (string $item)
+{
+    print $item;
+	return `match "^." $item`;
+}

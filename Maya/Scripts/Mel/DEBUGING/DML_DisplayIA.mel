@@ -1,0 +1,17 @@
+global proc DML_DisplayIA (string $name,int $array[], int $linebreak)
+{
+    int $a;
+    int $i;
+    print ("\n"+$name+"\n");
+    for ($a in $array)
+    { 
+	    $i++;
+		print ($a+" ");
+		if ($i>=$linebreak)
+		{
+			print "\n";
+			$i = 0;
+		}
+     
+    }
+}

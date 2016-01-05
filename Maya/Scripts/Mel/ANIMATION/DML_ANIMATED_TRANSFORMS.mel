@@ -1,0 +1,24 @@
+//Get A list Of All The Transforms That Have Been Animated
+global proc string[] DML_ANIMATED_TRANSFORMS()
+{
+	string $mesh,$Animated_Mesh_Transforms[];
+	
+	string $MeshTransforms[] = listTransforms("-visible -type mesh");
+	
+	//Scan Through All The Joints
+	//
+	for($mesh in $MeshTransforms)
+	{
+		//Check To see If The Current Joint Has Animation
+		//
+		if(keyframe("-query","-keyframeCount",$mesh))
+		{
+			//Add it To the Final List
+			//
+			$Animated_Mesh_Transforms[size($Animated_Mesh_Transforms)] = $mesh;
+		}
+	}
+	//Outputs A list Off All joints With Animation
+	//
+	return $Animated_Mesh_Transforms;
+}

@@ -1,0 +1,17 @@
+global proc int DML_IsTransform()
+{
+    //Get The First Object in the selection List    
+    string $Node = `DML_FirstSelected`;
+    
+    //Check To See if it Is A transform node
+    int $check1 = `objectType -isType transform $Node`;
+    
+    //Check To See if it is visable
+    int $check2 = `getAttr ($Node+".visibility")`;
+    
+    //If both Checks Are good The it is a Viable Transform
+    if(($check1)&&($check2))
+        return true;
+    else
+        return false;
+}

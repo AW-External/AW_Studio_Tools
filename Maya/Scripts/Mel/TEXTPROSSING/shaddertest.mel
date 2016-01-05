@@ -1,0 +1,38 @@
+global proc DML_CAssinment ()
+{
+    string $Componets[] = `DML_ComponetList("f")`;
+    string $component = $Componets[1];
+    // FIND THE SHAPE NODE
+    //
+    string $shape[] = `listRelatives -path -parent $component`;
+    
+    // FIND THE SHADING ENGINE
+    //
+    string $connections[] = `listConnections -source false -type "shadingEngine" $shape[0]`;
+    
+    // THERE MAY BE MORE THAN ONE SHADING GROUP CONNECTED TO THE
+    // GEOMETRY SO FIND THE EXACT ONE
+    //
+    $connections = `stringArrayRemoveDuplicates $connections`;
+    
+    //SHADINGGROUP ATTACHED TO COMPONENT
+    //
+    string $shadingGroup = "";
+    
+    int $i,$ncons = `size $connections`;
+    
+    for ($component in $Componets)
+    {
+        for ($i in `DML_Range 0 $ncons 1`)
+        {
+            int $result = `sets -isMember $connections[$i] $component`;
+        
+            if ($result == 1)
+            {
+                print ($i+"\n");
+                
+                break;
+            }
+        }
+    }
+}

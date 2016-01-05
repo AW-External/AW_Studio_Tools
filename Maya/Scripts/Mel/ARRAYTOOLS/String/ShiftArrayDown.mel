@@ -1,0 +1,23 @@
+//shifts entries inclusive from the start index, to the end index down (ie away from zero) in an array
+global proc string[] ShiftArrayDown( string $array[], int $startIndex, int $endIndex )
+{
+	string $newArray[];
+	
+	int $displaced = $endIndex+1;
+	
+	int $num = ( $endIndex-$startIndex )+1;
+
+	if( $endIndex >= `size $array`-1 ) return $array;
+
+	//copy the original array to the newArray variable
+	for( $n = 0; $n < `size $array`; $n++ ) $newArray[$n] = $array[$n];
+
+	int $i = $startIndex+$num;
+	
+	for( $n = 0; $n < $num; $i--, $n++ )
+		$newArray[$i] = $array[( $i-1 )];
+
+	$newArray[$startIndex] = $array[$displaced];
+	
+	return $newArray;
+}

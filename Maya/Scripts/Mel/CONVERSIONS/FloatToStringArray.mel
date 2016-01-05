@@ -1,0 +1,24 @@
+global proc int FloatToStringArray (string $StringArray[], float $FloatArray[],int $numberToCopy)
+{
+	if(!$numberToCopy)$numberToCopy = `size $FloatArray`;
+	
+	if(`size $FloatArray`)
+	{
+		float $FloatHolder[] = $FloatArray;
+		clear $FloatArray; clear $StringArray;
+		
+		int $i=0;
+		while($i<$numberToCopy)
+			$StringArray[$i] = `FloatToString $FloatHolder[$i++]`;
+			
+		$i=0;
+		while($numberToCopy < `size $FloatHolder`)
+			$FloatArray[$i++] = $FloatHolder[$numberToCopy++];
+			
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}

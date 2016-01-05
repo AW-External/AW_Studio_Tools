@@ -1,0 +1,31 @@
+global proc int[] DML_ArgParser( string $Args)
+{
+    global string $G_DML_StrReturn[];
+    global string $G_DML_ArgReturn[];
+    clear $G_DML_StrReturn;
+    clear $G_DML_ArgReturn;
+    
+    // Check if $Args is empty
+    if(!`size $Args`)
+        error -showLineNumber 1 "You must pass at least on flat into DML_ArgParser ";
+
+    string $Arglist[];
+    $Args = `substituteAllString $Args "," "_"`;
+    $Args = `substituteAllString $Args "-" "_"`;
+    $Args = `substituteAllString $Args " " "_"`;
+    $Args = `substituteAllString $Args "|" " "`;
+    tokenize $Args $Arglist;
+    
+    string $Flags = `substituteAllString $Arglist[0] "_" " "`;
+    string $Items = `substituteAllString $Arglist[1] "_" " "`;
+    int $FlagCount = `tokenize $Flags $G_DML_ArgReturn`;
+    int $ItemCount = `tokenize $Items $G_DML_StrReturn`;
+    int $return[];
+    
+    for($i in DML_Range(1,$FlagCount,1))
+    {
+        $return[$i-1] = $i;
+    }
+    
+    return $return;
+}

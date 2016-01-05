@@ -1,0 +1,10 @@
+global proc float[] DML_IK_TIMES (string $joint, int $Start, int $End)
+{
+	//list of float values for all The Rotation Attr
+	//
+	float $FTimes[] =  keyframe("-at","twi","-at","rol","-at","ikb","-at","rx","-at","ry","-at","rz","-at","tx","-at","ty","-at","tz","-time",($Start+":"+$End),"-query","-timeChange");
+	
+	$FTimes = DML_MOD_KEYTIMES($FTimes,$Start,$End);
+	
+	return $FTimes;
+}

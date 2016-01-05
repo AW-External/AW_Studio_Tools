@@ -1,0 +1,30 @@
+global proc string[] DML_RootObjects()
+{
+    string $currentSelection[] = `ls -sl`;
+    string $item,$RootParents[];
+    
+    //Scan Through All Transform Nodes
+    for($item in `ls -type transform`)
+    {
+        select -r $item;
+        //Does This Node Have Parents
+        if(!size(`listRelatives -p -typ transform`))
+        {
+            //Does This Node Have A Shape Attached To It
+            if(size(`listRelatives -shapes`))
+            {
+                //Does This Node Have Childern
+                if(size(`listRelatives -typ transform`))
+                {
+                    if(!`objectType -isType "camera" (DML_GetShape())`)
+                    {
+                        //Add The Parent To the Current selection list
+                        $RootParents[size($RootParents)] = $item;
+                    }
+                }
+            }
+        }
+    }
+    select -r $currentSelection;
+    return $RootParents;
+}

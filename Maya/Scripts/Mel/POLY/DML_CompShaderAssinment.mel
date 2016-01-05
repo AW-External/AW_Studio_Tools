@@ -1,0 +1,60 @@
+global proc string DML_CompShaderAssinment (string $component)
+{
+    // FIND THE SHAPE NODE
+    //
+    string $shape[] = `listRelatives -path -parent $component`;
+    
+    // FIND THE SHADING ENGINE
+    //
+    string $connections[] = `listConnections -source false -type "shadingEngine" $shape[0]`;
+    
+    // THERE MAY BE MORE THAN ONE SHADING GROUP CONNECTED TO THE
+    // GEOMETRY SO FIND THE EXACT ONE
+    //
+    $connections = `stringArrayRemoveDuplicates $connections`;
+    
+    //SHADINGGROUP ATTACHED TO COMPONENT
+    //
+    string $shadingGroup;
+    
+    //SHADER ATTACHED TO COMPONENT VIA SHADINGGROUP
+    //
+    string $shader[];
+    
+    for ($connection in $connections)
+    {
+        int $result = `sets -isMember $connection $component`;
+        
+        if ($result == 1)
+        {
+            $shadingGroup = $connection;
+        }
+    }
+    
+    // IF NO SHADING GROUP HAS BEEN FOUND, THE COMPONENTS MUST NOT BE
+    // MAPPED - THIS MEANS THE SHAPE IS MAPPED
+    //
+    if ($shadingGroup == "")
+    {
+        for ($connection in $connections)
+        {
+            int $result = `sets -isMember $connection $shape[0]`;
+            if ($result == 1) 
+                $shadingGroup = $connection;
+        }
+    }
+    
+    if ($shadingGroup != "")
+    {
+        // FIND THE SHADER CONNECTED TO THE SHADING GROUP
+        //
+        string $shaderConnection = `connectionInfo -sourceFromDestination ($shadingGroup + ".surfaceShader")`;
+        
+        tokenize $shaderConnection "." $shader;
+        
+    }
+    else
+        error ("getCompShader: no shader found for " + $component + ".");
+    
+    return $shader[0];
+}

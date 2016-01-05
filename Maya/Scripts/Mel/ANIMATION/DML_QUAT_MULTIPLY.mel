@@ -1,0 +1,28 @@
+global proc float[] DML_QUAT_MULTIPLY(float $Q1[])
+{
+	float $result[];
+	
+	vector $v = `getAttr ".jointOrient"`;
+	
+	float $Q2[] = `DML_QUAT $v`;
+		
+	vector $v1 = << $Q1[0], $Q1[1], $Q1[2] >>;
+	vector $v2 = << $Q2[0], $Q2[1], $Q2[2] >>;
+	float $s1 = $Q1[3];
+	float $s2 = $Q2[3];
+	
+	//Expanded out the cross product just to make sure it was right
+	float $v3x = $s1 * $v2.x + $s2 * $v1.x + ($v1.y * $v2.z - $v1.z * $v2.y);
+	float $v3y = $s1 * $v2.y + $s2 * $v1.y + ($v1.z * $v2.x - $v1.x * $v2.z);
+	float $v3z = $s1 * $v2.z + $s2 * $v1.z + ($v1.x * $v2.y - $v1.y * $v2.x);
+	float $s3 = $s1 * $s2 - ( ($v1.x * $v2.x) + ($v1.y * $v2.y) + ($v1.z * $v2.z) );
+	
+	// Normalize Quaternion
+	float $mag = sqrt( ($v3x*$v3x) + ($v3y*$v3y) + ($v3z*$v3z) + ($s3 * $s3) );
+	
+	$result[0] = $v3x / $mag;
+	$result[1] = $v3y / $mag;
+	$result[2] = $v3z / $mag;
+	$result[3] = $s3  / $mag;
+	return $result;
+}

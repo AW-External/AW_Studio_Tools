@@ -1,0 +1,447 @@
+proc Display_Globals()
+{
+    global string $g_DML_Action;
+    global string $g_DML_Type;
+    global string $g_DML_Path;
+    global string $g_DML_Name;
+    global string $g_DML_PathFlag;
+    global string $g_DML_Base;
+    global string $g_DML_OutPutPaths[];
+    global string $g_DML_SubFlages[];
+    global string $g_DML_SubPaths[];
+    global string $g_DML_MasterArgs[];
+    global string $g_DML_SecondaryArgs[];
+    global string $g_DML_OptionalArgs[];
+    global string $g_DML_Retreved_FileList[];
+    global string $g_DML_Extracted_OutPut_Path;
+}
+
+proc string Set_Base_Directory ()
+{
+    global string $g_DML_Base;
+       
+    // Get The Current User Directory
+    // Fources All Data into The Default maya Directory
+    // Fources All Data into The g_DML_Base SDDX Directory
+    // "Drive Letter:/Documents and Settings/UserName/My Documents/maya/DML_Extraction_Data/"
+    //
+    string $g_DML_Base = (`getenv HOME`+"/maya/DML_Extraction_Data/");
+    
+    // Get The Current Name of the Working project Directory
+    // "Drive Letter:/Documents and Settings/UserName/My Documents/maya/DML_Extraction_Data/default/"
+    //
+    $g_DML_Base += (`workspace -q -shortName`+"/");
+    
+    // Get The Current Name of Open Scene
+    // "Drive Letter:/Documents and Settings/UserName/My Documents/maya/DML_Extraction_Data/default/Myscene.mb"
+    //
+    $g_DML_Base += (`file -q -sceneName -shortName`);
+    
+    // Strips The .Ext From the End Of The Scene For A Correct Directory Name
+    // "Drive Letter:/Documents and Settings/UserName/My Documents/maya/DML_Extraction_Data/default/Myscene/"
+    //
+    $g_DML_Base = (`match "[^.]+" $g_DML_Base`+"/"); 
+    
+    return $g_DML_Base;
+}
+
+proc Set_SubPaths_And_SubFlages()
+{
+    global string $g_DML_OutPutPaths[];
+    global string $g_DML_SubFlages[];
+    global string $g_DML_SubPaths[];
+    global int $g_DML_OutPutPathscanArray[];
+    global string $g_DML_Base;
+    clear $g_DML_OutPutPaths;
+    clear $g_DML_SubFlages;
+    clear $g_DML_SubPaths;
+    
+    string $Paths = "Transforms Groups Locators Joints Meshs Assemblies Dump DXOps DxRaw DXparsed";
+    
+    tokenize  $Paths $g_DML_SubPaths;
+    int $i;
+    
+    $g_DML_SubPaths = `sort $g_DML_SubPaths`;
+    
+    for($i in `DML_Range 0 (size($g_DML_SubPaths)) 1`)
+    {
+        $g_DML_OutPutPathscanArray[$i] = $i;
+        $g_DML_SubFlages[$i] = tolower(`substring $g_DML_SubPaths[$i] 1 3`);
+        $g_DML_OutPutPaths[$i] = ($g_DML_Base+$g_DML_SubPaths[$i]+"/");
+    }
+    //print $g_DML_OutPutPaths;
+    //print $g_DML_SubFlages;
+    //print $g_DML_SubPaths;
+    //print $g_DML_OutPutPathscanArray;
+}
+
+proc Set_Argument_Values()
+{
+    global string $g_DML_MasterArgs[];
+    global string $g_DML_SecondaryArgs[];
+    global string $g_DML_OptionalArgs[];
+    
+    string $MArgs = "Get Set Create Delete Clear Find Open Close";
+    string $SArgs = "Dir File";
+    string $OArgs = "All Single Auto User";
+    
+    tokenize  $MArgs $g_DML_MasterArgs;
+    tokenize  $SArgs $g_DML_SecondaryArgs;
+    tokenize  $OArgs $g_DML_OptionalArgs;
+    
+    //print $g_DML_MasterArgs;
+    //print $g_DML_SecondaryArgs;
+    //print $g_DML_OptionalArgs;
+}
+
+proc Set_Global_Data()
+{
+    Set_Argument_Values;
+    Set_Base_Directory;
+    Set_SubPaths_And_SubFlages;
+}
+
+proc Create_Directory()
+{
+    global string $g_DML_Extracted_OutPut_Path;
+    
+    if(!`filetest -d $g_DML_Extracted_OutPut_Path`)
+    {
+        print ("Creating Directory "+$g_DML_Extracted_OutPut_Path+"\n");
+        sysFile -makeDir $g_DML_Extracted_OutPut_Path;
+    }
+    else
+    {
+        print ("Directory Allready Exists "+$g_DML_Extracted_OutPut_Path+"\n");
+    }
+}
+
+proc Delete_File()
+{
+    global string $g_DML_Extracted_OutPut_Path;
+    global string $g_DML_Name;
+    
+    if (`filetest -r ($g_DML_Extracted_OutPut_Path+$g_DML_Name)`)
+    {
+        print ("Deleting File "+$g_DML_Name+"\n In Directory "+$g_DML_Extracted_OutPut_Path+"\n");
+        sysFile -delete ($g_DML_Extracted_OutPut_Path+$g_DML_Name);
+    }
+    else
+    {
+        print ("File Does not exist "+$g_DML_Name+"\n In Directory "+$g_DML_Extracted_OutPut_Path+"\n");
+    }
+}
+
+proc Delete_FileList()
+{
+    global string $g_DML_Retreved_FileList[];
+    global string $g_DML_Extracted_OutPut_Path;
+    global string $g_DML_Name;
+    
+    string $FileName;
+    
+    for($g_DML_Name in $g_DML_Retreved_FileList)
+    {
+        Delete_File;
+    } 
+}
+
+proc int Retreve_FileList()
+{
+    global string $g_DML_Retreved_FileList[];
+    global string $g_DML_Extracted_OutPut_Path;
+    clear $g_DML_Retreved_FileList;
+    
+    if (`filetest -d $g_DML_Extracted_OutPut_Path`)
+    {
+        $g_DML_Retreved_FileList = `getFileList -folder $g_DML_Extracted_OutPut_Path -filespec "*.*"`;
+        
+        if(`size $g_DML_Retreved_FileList`) return 1;
+    }
+
+    return 0;
+}
+
+proc FindMasterArg()
+{
+    global string $ArgList[];
+    global string $g_DML_MasterArgs[];
+    global string $g_DML_Action = "";
+    
+    int $i,$j;
+    int $MasterCount = `size $g_DML_MasterArgs`;
+    int $ArgCount = `size $ArgList`;
+
+    for($i in `DML_Range 0 $ArgCount 1`)
+	{
+		for($j in `DML_Range 0 $MasterCount 1`)
+		{
+			if(`gmatch $g_DML_MasterArgs[$j] $ArgList[$i]`)
+			{
+                string $item = $g_DML_MasterArgs[$j];
+				$g_DML_Action = $item;
+                break;
+			}
+		}
+	}
+}
+
+proc FindSecondaryArg()
+{
+	global string $ArgList[];
+	global string $g_DML_SecondaryArgs[];
+    global string $g_DML_Type = "";
+    
+	int $i,$j;
+	int $SecondarySize = `size $g_DML_SecondaryArgs`;
+	int $ArgCount =  `size $ArgList`;
+
+	for($i in `DML_Range 0 $ArgCount 1`)
+	{
+		for($j in `DML_Range 0 $SecondarySize 1`)
+		{
+			if(`gmatch $g_DML_SecondaryArgs[$j] $ArgList[$i]`)
+			{
+                string $item = $g_DML_SecondaryArgs[$j];
+				$g_DML_Type = $item;
+			}
+		}
+	}
+}
+
+proc FindOptionalArgs()
+{
+	global string $ArgList[];
+	global string $g_DML_OptionalArgs[];
+    global string $g_DML_Path = "";
+    
+	int $i,$j;
+	int $scanSize = `size $g_DML_OptionalArgs`;
+	int $listSize = `size $ArgList`;
+
+	for($i in `DML_Range 0 $listSize 1`)
+	{
+		for($j in `DML_Range 0 $scanSize 1`)
+		{
+			if(`gmatch $g_DML_OptionalArgs[$j] $ArgList[$i]`)
+			{
+                string $item = $g_DML_OptionalArgs[$j];
+                $g_DML_Path = $item;
+                break;
+			}
+		}
+	}
+}
+
+proc FindSubFlag()
+{
+	global string $ArgList[];
+	global string $g_DML_SubFlages[];
+    global string $g_DML_PathFlag = "";
+    
+	int $i,$j;
+	int $scanSize = `size $g_DML_SubFlages`;
+	int $listSize = `size $ArgList`;
+
+	for($i in `DML_Range 0 $listSize 1`)
+	{
+		for($j in `DML_Range 0 $scanSize 1`)
+		{
+			//print ($g_DML_SubFlages[$j]+" "+$ArgList[$i]+"\n");
+            
+			if(`gmatch $g_DML_SubFlages[$j] $ArgList[$i]`)
+			{
+                string $item = $g_DML_SubFlages[$j];
+                $g_DML_PathFlag = $item;
+				break;
+			}
+		}
+	}
+}
+
+proc FindItemArg()
+{
+	global string $ArgList[];
+	global string $g_DML_Name = "";
+	global string $g_DML_Path;
+	
+	if(`gmatch $g_DML_Path "Auto"`)
+	{
+		$g_DML_Name = DML_PureName(`DML_FirstSelected`);
+	}
+	else if(`gmatch $g_DML_Path "User"`)
+	{
+		int $i;
+		
+		int $ArgScaner[] = `DML_Range 0 (size($ArgList)) 1`;
+		
+		for($i in $ArgScaner)
+		{
+			if(`gmatch $ArgList[$i] "Item"`)
+			{
+				$g_DML_Name = $ArgList[$i+1];
+				break;
+			}
+		}
+	}
+    else
+    {
+        $g_DML_Name = DML_PureName(`DML_FirstSelected`);
+    }
+    $g_DML_Name += ".txt";
+}
+
+proc Extract_OutPutPath()
+{
+	global string $g_DML_SubFlages[];
+	global string $g_DML_OutPutPaths[];
+    global string $g_DML_PathFlag;
+    global string $g_DML_Extracted_OutPut_Path;
+	
+	int $i,$j;
+	int $subflagSize = `size $g_DML_SubFlages`;
+
+	for($i in `DML_Range 0 $subflagSize 1`)
+	{
+		if(`gmatch $g_DML_SubFlages[$i] $g_DML_PathFlag`)
+		{
+			$g_DML_Extracted_OutPut_Path = $g_DML_OutPutPaths[$i];
+		}
+	}
+}
+
+proc Create_All_Directorys()
+{
+    global string $g_DML_OutPutPaths[];
+    global int $g_DML_OutPutPathscanArray[];
+    global string $g_DML_Extracted_OutPut_Path;
+    
+    int $i;
+    
+    for($i in $g_DML_OutPutPathscanArray)
+    {
+        $g_DML_Extracted_OutPut_Path = $g_DML_OutPutPaths[$i];
+        
+        Create_Directory;
+    }
+}
+
+proc Create_Input_Directory()
+{
+    Create_Directory;
+}
+
+proc Clear_All_Directorys()
+{
+    global string $g_DML_OutPutPaths[];
+    global string $g_DML_Extracted_OutPut_Path;
+    
+    for($g_DML_Extracted_OutPut_Path in $g_DML_OutPutPaths)
+    {
+        if(`Retreve_FileList`)
+        {
+            Delete_FileList;
+        }
+    }
+}
+
+proc Clear_Input_Directory()
+{
+    if(`Retreve_FileList`)
+    {
+        Delete_FileList;
+    }
+}
+
+proc Clear_Input_File()
+{
+    FindItemArg;   
+    Delete_File;
+}
+
+proc Create()
+{
+    global string $g_DML_Action;
+    global string $g_DML_Type;
+	global string $g_DML_Path;
+	global string $g_DML_Name;
+    
+    if(`gmatch $g_DML_Type "Dir"`)
+    {
+        if(`gmatch $g_DML_Path "All"`)
+        {
+            Create_All_Directorys;
+        }
+        else if(`gmatch $g_DML_Path "Single"`)
+        {
+            Create_Input_Directory;
+        }
+    }
+}
+
+proc Clear()
+{
+    global string $g_DML_Action;
+    global string $g_DML_Type;
+	global string $g_DML_Path;
+	global string $g_DML_Name;
+    
+    if(`gmatch $g_DML_Type "Dir"`)
+    {
+        if(`gmatch $g_DML_Path "All"`)
+        {
+            Clear_All_Directorys;
+        }
+        else if(`gmatch $g_DML_Path "Single"`)
+        {
+            Clear_Input_Directory;
+        }
+    }
+    else if(`gmatch $g_DML_Type "File"`)
+    {
+        FindItemArg;
+        Clear_Input_File;
+    }
+}
+
+proc Extract_Commands_From_Args (string $Args)
+{
+    global string $ArgList[];
+    clear $ArgList;
+    tokenize $Args $ArgList;
+    Set_Global_Data;
+	FindMasterArg;
+	FindSecondaryArg;
+	FindOptionalArgs;
+    FindSubFlag;
+    Extract_OutPutPath;
+
+}
+
+global proc DML_FileDirectoryOps(string $Args)
+{
+    global string $g_DML_Action;
+	global string $g_DML_Type;
+	global string $g_DML_Path;
+	global string $g_DML_Name;
+    global string $g_DML_PathFlag;
+    global string $g_DML_Extracted_OutPut_Path;
+    
+	DML_IsFileSaved;
+    Extract_Commands_From_Args $Args;
+    
+    scriptEditorInfo -clearHistory;
+    
+    switch($g_DML_Action)
+    {
+        case "Clear":
+             Clear;
+        break;
+        
+        case "Create":
+            Create;
+        break;
+    }
+    
+    
+}

@@ -1,0 +1,38 @@
+//example:
+//DML_IndexCrop_Str { "a", "b", "c", "d" } ":-2";
+//{ "a", "b" };
+//
+//DML_IndexCrop_Str { "a", "b", "c", "d" } "1:-1";
+//{ "b", "c" };
+//------
+global proc string[] SliceArray ( string $array[], string $startEndStr )
+{
+	string $cropped[] = {};
+	
+	string $startStr = `match "^[^:]+" $startEndStr`;
+	
+	string $endStr = `match "[^:]+$" $startEndStr`;
+	
+	int $size = `size $array`;
+	
+	int $start = 0;
+	
+	int $end = $size;
+
+	$startStr = `match "[-0-9]+" $startStr`;
+	
+	$endStr = `match "[-0-9]+" $endStr`;
+	
+	if( `size $startStr` ) $start = $startStr;
+	
+	if( `size $endStr` ) $end = $endStr;
+	
+	if( $start<0 ) $start = $size+$start;
+	
+	if( $end<0 ) $end = $size+$end;
+	
+	for( $n=$start; $n<$end; $n++ )
+		$cropped[( `size $cropped` )] = $array[$n];
+
+	return $cropped;
+}

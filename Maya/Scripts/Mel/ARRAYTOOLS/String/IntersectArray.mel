@@ -1,0 +1,17 @@
+//------
+//is essentially a wrapper for the stringArrayIntersector function in maya - however
+//this proc is easier to use and is a one line solution
+//------
+global proc string[] IntersectArray( string $array1[], string $array2[] )
+{
+	string $comparator = `stringArrayIntersector`;
+
+	stringArrayIntersector -e -i $array1 $comparator;
+	stringArrayIntersector -e -i $array2 $comparator;
+
+	string $common[] = `stringArrayIntersector -q $comparator`;
+	
+	deleteUI $comparator;
+
+	return $common;
+}

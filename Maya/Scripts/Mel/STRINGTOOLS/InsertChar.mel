@@ -1,0 +1,30 @@
+global proc string InsertChar (string $item, string $insert, int $position)
+{
+	string	$firstSegment;
+	string	$secondSegment;
+	
+	if ($position != 0)
+	{
+		if ($position < size($item))
+		{
+			if ($position != 1)
+			{
+				$firstSegment = `substring $item 1 ($position -1)`;
+				$secondSegment = `substring $item ($position) (size($item))`;
+				
+				return ($firstSegment + $insert + $secondSegment);
+			}
+			else
+			{return ($insert + $item);
+			}
+		}
+		else
+		{
+			return ($item + $insert);
+		}
+	}
+	else
+	{
+		return $item;
+	}
+}

@@ -1,0 +1,18 @@
+global proc string MakeCommaSeperated (string $array[])
+{
+    string $FlatArray = "";
+    
+    int $index, $count = size($array);
+    
+    string $Compond = ($array[0]);
+    
+    if ($count)
+    {   
+        for ($index = 1; $index < $count; $index++)
+        {
+            $Compond += ("," + $array[$index]);
+        }
+    }
+
+    return $Compond;
+}

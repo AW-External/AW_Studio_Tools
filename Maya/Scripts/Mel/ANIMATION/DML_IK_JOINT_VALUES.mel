@@ -1,0 +1,15 @@
+global proc vector[] DML_IK_JOINT_VALUES (string $joint, float $keytimes[])
+{
+	vector $Values[];
+	
+	float $Key;
+	
+	for ($Key in $keytimes)
+	{
+		vector $v = `getAttr -time $Key ($joint+".rotate")`
+		
+		$Values[size($Values)] = $v;
+	}
+	
+	return $Values;
+}

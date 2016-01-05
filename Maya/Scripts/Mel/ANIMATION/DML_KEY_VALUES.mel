@@ -1,0 +1,150 @@
+global proc DataTrimer (float $Data[])
+{
+	global float $G_Start,$G_End;
+	
+	int $i;
+	
+	float $DataScanner,$DataHolder[] = $Data; clear $Data;
+	
+	$Data[0] =  $G_Start;
+	
+	for ($i=0; $i<`size $DataHolder`; $i++)
+	{
+		$DataHolder[$i] = floor($DataHolder[$i] + 0.5);
+		int $add = on;
+		for($DataScanner in $Data)
+		{
+			if(( $Data[$i] == $FKey )||( $Data[$i] == $G_Start )||( $Data[$i] == $G_End ))
+			{
+				$add = off;
+			}
+		}
+		if($add)
+		{
+			$Data[size($Data)] = $DataHolder[$i];
+		}
+	}
+	$Data[size($Data)] = $G_End;
+	$Data = sort($Data);
+	
+}
+
+global proc MULTIPLY (float $Q1[], float $Q2[])
+{
+	vector $v1 = << $Q1[0], $Q1[1], $Q1[2] >>;
+	vector $v2 = << $Q2[0], $Q2[1], $Q2[2] >>;
+	float $s1 = $Q1[3];
+	float $s2 = $Q2[3];
+	
+	//Expanded out the cross product just to make sure it was right
+	float $v3x = $s1 * $v2.x + $s2 * $v1.x + ($v1.y * $v2.z - $v1.z * $v2.y);
+	float $v3y = $s1 * $v2.y + $s2 * $v1.y + ($v1.z * $v2.x - $v1.x * $v2.z);
+	float $v3z = $s1 * $v2.z + $s2 * $v1.z + ($v1.x * $v2.y - $v1.y * $v2.x);
+	float $s3 = $s1 * $s2 - ( ($v1.x * $v2.x) + ($v1.y * $v2.y) + ($v1.z * $v2.z) );
+	
+	// Normalize Quaternion
+	float $mag = sqrt( ($v3x*$v3x) + ($v3y*$v3y) + ($v3z*$v3z) + ($s3 * $s3) );
+	
+	$Q1[0] = $v3x / $mag;
+	$Q1[1] = $v3y / $mag;
+	$Q1[2] = $v3z / $mag;
+	$Q1[3] = $s3  / $mag;
+}
+
+global proc EmulToQuat (float $Data1[])
+{
+	float $Data2[] = `getAttr ".jointOrient"`;
+	
+	float $x1 = deg_to_rad($Data1[0]); 			float $x2 = deg_to_rad($Data2[0]);
+	float $y1 = deg_to_rad($Data1[1]); 			float $y2 = deg_to_rad($Data2[1]);
+	float $z1 = deg_to_rad($Data1[2]); 			float $z2 = deg_to_rad($Data2[2]);
+	
+	float $chr1,								$chr2;
+	float $chp1,								$chp2;
+	float $chd1,								$chd2;
+	float $shr1,								$shr2;
+	float $shr1,								$shr2;
+	float $shr1,								$shr2;
+	
+	$chr1 = cos($x/2);  $shr1 = sin($x/2);		$chr2 = cos($x/2);  $shr2 = sin($x/2);
+	$chp1 = cos($y/2);  $shp1 = sin($y/2);		$chp2 = cos($y/2);  $shp2 = sin($y/2);
+	$chd1 = cos($z/2);  $shd1 = sin($z/2);		$chd2 = cos($z/2);  $shd2 = sin($z/2);
+	
+	$Data1[0]=-($chd*$chp*$shr-$shd*$shp*$chr); $Data2[0]=-($chd*$chp*$shr-$shd*$shp*$chr);
+	$Data1[1]=-($chd*$shp*$chr+$shd*$chp*$shr);	$Data2[1]=-($chd*$shp*$chr+$shd*$chp*$shr);
+	$Data1[2]=-($shd*$chp*$chr-$chd*$shp*$shr);	$Data2[2]=-($shd*$chp*$chr-$chd*$shp*$shr);
+	$Data1[3]=-($chd*$chp*$chr+$shd*$shp*$shr);	$Data2[3]=-($chd*$chp*$chr+$shd*$shp*$shr);
+	
+	MULTIPLY (float $Data1[], float $Data2[])
+}
+
+global proc KeyTimes(string $str_RData[],string $str_SData[],string $str_TData[])
+{
+	global float $G_Start,$G_End;
+	
+	float $fl_RData[] = `keyframe -at rx -at ry -at rz -time ($G_Start+":"+$G_End) -query -timeChange`;	DataTrimer $fl_RData;
+	float $fl_TData[] = `keyframe -at tx -at ty -at tz -time ($G_Start+":"+$G_End) -query -timeChange`;	DataTrimer $fl_TData;
+	float $fl_SData[] = `keyframe -at sx -at sy -at sz -time ($G_Start+":"+$G_End) -query -timeChange`;	DataTrimer $fl_SData;
+	
+	int $r,$s,$t;
+	
+	for ($i=0; $i < `size $fl_RData`; $i++)
+	{
+		int $k = ($Key_Times[$i]-$Start+1);
+		
+		$str_RData[$i] = `FormateInt $k`;
+	}
+	
+	for ($i=0; $i < `size $fl_SData`; $i++)
+	{
+		int $k = ($Key_Times[$i]-$Start+1);
+		
+		$str_SData[$i] = `FormateInt $k`;
+	}
+	
+	for ($i=0; $i < `size $fl_TData`; $i++)
+	{
+		int $k = ($Key_Times[$i]-$Start+1);
+		
+		$str_SData[$i] = `FormateInt $k`;
+	}
+	
+}
+
+global proc string DML_JOINT_ANIMATION()
+{
+	global float $G_Start = 0.0;
+    global float $G_End = 40.0;
+	float $RKeys[],$SKeys[],$TKeys[];
+	
+	DataTrimer $RKeys;
+	DataTrimer $SKeys;
+	DataTrimer $TKeys;
+	
+	string $RTimes[] = `KeyTimes $RKeys`;
+	string $STimes[] = `KeyTimes $SKeys`;
+	string $TTimes[] = `KeyTimes $TKeys`;
+	
+	float $Data1[] = `getAttr -time $Key ".rotate"`;
+		
+	EmulToQuat $qoffset;
+	EmulToQuat $qrot;
+	
+	for ($Key in $RKeys)
+	{
+		float $qrot[] = EmulToQuat(`getAttr -time $Key ".rotate"`);
+		
+		string $x = `FORMATE_FLOAT $qrot[0]`;
+		string $y = `FORMATE_FLOAT $qrot[1]`;
+		string $z = `FORMATE_FLOAT $qrot[2]`;
+		string $w = `FORMATE_FLOAT $qrot[3]`;
+			
+		($ktimes[$i] + "4;"+$x+","+$y+","+$z+","+$w+";;,"); 
+		
+		//Returns A list of Vector values for all The Rotation Attr
+		//
+		$Values[size($Values)] = $v;
+	}
+	return $Values;
+}
+	

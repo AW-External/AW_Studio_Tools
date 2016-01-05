@@ -1,0 +1,7 @@
+global proc int[] DML_ReverseRange (int $start,int $stop,int $ink)
+{
+  int $range[] = `DML_Range $start $stop $ink`;
+  
+  $range = `DML_Reverse $range`;
+  return $range;
+}

@@ -1,0 +1,4 @@
+global proc string DML_SceneName ()
+{
+	return  (basename(`file -q -sceneName -shortName`,("."+(fileExtension(`file -q -sceneName -shortName`)))));
+}

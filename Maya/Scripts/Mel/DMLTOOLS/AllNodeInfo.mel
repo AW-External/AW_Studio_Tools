@@ -1,0 +1,32 @@
+global proc AllNodeInfo ()
+{
+	string $Selected = ` DML_FirstSelected `;
+	
+	string $Object_Type = ` objectType $Selected `;
+	
+	string $Object_Tag_Type = ` objectType -typeTag $Selected `;
+	
+	string $Object_api_Type = ` nodeType -apiType $Selected `;
+	
+	string $Object_Inhairatence[] = ` nodeType -inherited $Selected `;
+	
+	string $classifications[] = `getClassification $Object_Type`;
+	
+	print("Classified of "+`DML_PureName $Selected`+"\n");
+	
+	print ("\t" + $Object_Type+"\n");
+	
+	for ($c in $classifications)
+	{
+		print("\t"+$c+"\n");
+	}
+	
+	print("inherias of\n");
+	
+	for ($I in $Object_Inhairatence)
+	{
+		print("\t "+$I+"\n");
+	}
+	
+	//print (stringArrayToString($inherited,",")+"\n");
+}

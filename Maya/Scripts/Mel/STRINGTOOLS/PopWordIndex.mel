@@ -1,0 +1,27 @@
+global proc string PopWordIndex (string $item, int $position){
+	string	$tokenList[];
+	string	$returnString;
+	int		$x, $y;
+	
+	tokenize $item " " $tokenList;
+	$y = size($tokenList);
+	
+	for ($x=0; $x<$y; $x++){
+		if ($x != ($position -1)){
+			if ($position != $y){
+				if ($x != ($y-1))
+					{$returnString += ($tokenList[$x] + " ");}
+				else
+					{$returnString += $tokenList[$x];}
+			}
+			else{
+				if ($x != ($y-2))
+					{$returnString += ($tokenList[$x] + " ");}
+				else
+					{$returnString += $tokenList[$x];}
+			}		
+		}
+	}
+	
+	return $returnString;
+}

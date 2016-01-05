@@ -1,0 +1,10 @@
+global proc string SwitchLastChar (string $str, string $Char)
+{
+	int $strSize =  `size $str`;
+	
+	string $newString =  `startString $str ($strSize-1)`;
+	
+	$newString += $Char;
+	
+	return $newString;
+}

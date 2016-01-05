@@ -1,0 +1,53 @@
+global proc DML_DisplaySA (string $GlobalProcName, string $localProcName , string $VarabileName , string $array[],int $linebreak)
+{
+    string $a;
+	int $Breaker;
+    int $itr = 0;
+	int $ArraySize = `size $array`;
+	
+	print ("From global Proc  __:"+$GlobalProcName+":\n");
+	print ("     local  Proc  __:"+$localProcName+":\n");
+	print ("                       Debuging__:"+$VarabileName+":\n");
+	
+	if($ArraySize)
+	{
+		//int $linebreak = floor ((sqrt($ArraySize)) + .5);
+	
+	print ("Array size :"+$ArraySize+":\n\n");
+	
+    while($itr<$ArraySize)
+    {
+		print ("Elements "+$itr+" Through "+($itr+$linebreak)+"\n");
+		
+		print "        ";
+		
+		for($Breaker in `DML_Range 0 $linebreak 1`)
+		{
+			print ($array[$itr++]+" ");
+			
+			if($itr>$ArraySize) break;
+		}
+		
+		print "\n";
+		
+    }
+	
+	print "\n\n";
+	}
+	else
+	{
+		print "Array Was Empty\n";
+		
+	}
+}
+
+
+//for($Var in `env`)
+//{
+//	string $Match = `match "^$g_DML_.+" $Var`;
+//	if(`size $Match`)
+//	{
+//		string $type =  `whatIs $Match`;
+//		print ($Match+"\n"+$type+"\n");
+//	}
+//}

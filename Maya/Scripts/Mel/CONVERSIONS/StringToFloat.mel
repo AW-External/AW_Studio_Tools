@@ -1,0 +1,6 @@
+global proc float StringToFloat (string $value)
+{
+	float $newvalue = $value;
+	
+	return $newvalue;
+}

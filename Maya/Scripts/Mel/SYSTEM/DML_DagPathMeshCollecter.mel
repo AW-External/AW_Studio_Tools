@@ -1,0 +1,22 @@
+global proc DML_DagPathMeshCollecter()
+{ 
+	string $group $Export_Groups[] = (`ls "Export_Group"`);
+	for($group in $Export_Groups)
+	{
+		
+	    string $Childern[] = `listRelatives -fullPath -type transform $group`;
+    
+	    for ($Parent in $Childern)
+	    {
+	        select $Parent;
+	        
+	        if(`DML_IsMesh $Parent`)
+	        {    
+	            DML_MakeTransformFile;
+	            DML_MakeMeshFile;
+	        }
+	        
+	        DML_DagPathMeshCollecter $Parent;
+	    }
+    }
+}

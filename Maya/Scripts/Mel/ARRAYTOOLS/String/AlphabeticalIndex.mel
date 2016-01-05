@@ -1,0 +1,45 @@
+//------
+//returns an int array with a list of alphabetical weights corresponding to an
+//input string array.  the int array can be passed to the re-ordering proc:
+//DML_GetAlphabeticalIdx_* (ie DML_GetAlphabeticalIdx_str)
+//------
+global proc int[] AlphabeticalIndex( string $list[] )
+{
+	string $alphabet[] = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z" };
+	
+	int $weights[] = {};
+	
+	int $num = `size $list`;
+
+	for( $n=0; $n<$num; $n++ )
+	{
+		string $lower = `tolower $list[$n]`;
+		
+		string $str1, $str2, $str3;
+		
+		int $w1, $w2, $w3;
+
+		$str1 = `substring $lower 1 1`;
+		
+		$str2 = `substring $lower 2 2`;
+		
+		$str3 = `substring $lower 3 3`;
+		
+		for( $i=0; $i<26; $i++ ) if( $str1 == $alphabet[$i] ) { $w1 = $i; break; }
+		
+		for( $i=0; $i<26; $i++ ) if( $str2 == $alphabet[$i] ) { $w2 = $i; break; }
+		
+		for( $i=0; $i<26; $i++ ) if( $str3 == $alphabet[$i] ) { $w3 = $i; break; }
+
+		$w1 *= (pow(26,3));
+		
+		$w2 *= (pow(26,2));
+		
+		$weights[$n] = $w1 + $w2 + $w3;
+		
+		if( $lower != $list[$n] )
+			$weights[$n] += 1;
+	}
+
+	return $weights;
+}

@@ -1,0 +1,19 @@
+global proc int[] DML_PolagonFaceVertCount()
+{
+	int $faceCount[] = `polyEvaluate -f`;
+	int $PolyVertCount[];
+	int $i=$add=0;
+	for( $i=0;$i<$faceCount[0];$i++)
+	{
+		//find the vertex indices used by this face and split the returned string
+		//
+		string $split[]; 
+		//add the face number and vertex count for this face to the string
+		//
+		int $j,$nIndices = tokenize(match("[^:]+$",stringArrayToString(`polyInfo -fv (".f["+$i+"]")`,"")),$split);
+		
+		$PolyVertCount[$add++]= `size $split`;
+	}
+	
+	return $PolyVertCount;
+}

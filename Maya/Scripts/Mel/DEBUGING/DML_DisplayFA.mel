@@ -1,0 +1,16 @@
+global proc DML_DisplayFA (string $name,float $array[],int $linebreak)
+{
+    float $a;
+    int $i = 0;
+    print ("\n"+$name+"\n");
+    for ($a in $array)
+    { 
+     print (DML_FS($a)+" ");
+	    $i++;
+		if ($i>=$linebreak)
+		{
+			print "\n";
+			$i = 0;
+		}
+    }
+}

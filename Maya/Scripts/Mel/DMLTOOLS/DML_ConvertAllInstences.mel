@@ -1,0 +1,32 @@
+global proc DML_ConvertAllInstences()
+{
+	select -cl;
+	string $mainObject,$AllTransforms[] = `listTransforms "-long"`;
+	
+	if (size($AllTransforms) > 0)
+	{
+		for($mainObject in $AllTransforms)
+		{
+			string $mainShape[] = `listRelatives -fullPath -s $mainObject`;
+			
+			if (size($mainShape))
+			{
+				string $mainShapeParents[] = `listRelatives -ap $mainShape[0]`;
+				
+				if (size($mainShapeParents) > 1)
+				{
+					select -add $mainObject;
+				}
+			}
+		}                           
+        
+		$AllTransforms = `ls -sl`;
+        
+    	for ($object in $AllTransforms)
+    	{
+    		string $duplicatedObject[] = `duplicate $object`;
+    		delete $object;
+    		rename $duplicatedObject[0] $object;		
+    	}
+	}
+}

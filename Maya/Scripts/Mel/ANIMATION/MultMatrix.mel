@@ -1,0 +1,40 @@
+global proc float[] MultMatrix (string $itemA, float $matrix[])
+	//
+	// 	Description:
+	// 		Multiplies a point by a matrix and returns the result. 
+	//
+{
+	float $result[3],$point[3],$matrix[15];
+	
+	
+	$result = {0.0,0.0,0.0};
+	
+		$point = `xform -q -ws -t $itemA`;
+		
+		// create the node that will do the actual computation
+		//
+		string $multNode;
+		if ( catch($multNode = `createNode pointMatrixMult`) ) 
+		{
+			warning("Could not create pointMatrixMult node.");
+			return $result;
+		}
+		
+		// set the matrix and point inputs to the node
+		//
+		setAttr ($multNode+".vectorMultiply") true;
+		setAttr ($multNode+".inPoint") -type "double3" $point[0] $point[1] $point[2];
+		setAttr ($multNode+".inMatrix") -type "matrix" $matrix[0] $matrix[1] $matrix[2] $matrix[3] $matrix[4] $matrix[5] $matrix[6] $matrix[7] $matrix[8] $matrix[9] $matrix[10] $matrix[11] $matrix[12] $matrix[13] $matrix[14] $matrix[15];
+		
+		// get the result and delete the node since it is no longer required
+		//
+		$result = `getAttr ($multNode+".output")`;
+		
+		delete $multNode;
+		
+	
+	select $itemA;
+	
+	return $result;
+	
+}

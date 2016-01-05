@@ -1,0 +1,7 @@
+global proc string PopLastChar (string $item)
+{
+	if (`size $item`)
+	return `substring $item 1 (size($item) -1)`;
+	else
+	return $item;
+}

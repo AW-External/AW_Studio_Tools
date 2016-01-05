@@ -1,0 +1,24 @@
+global proc DML_Expand (string $stringList)
+{
+	$List = DML_Striper($List);
+	
+	string $Expr = ",";
+	string $replacer = " ";
+	string $sub = "";
+	string $Arra[]
+	// Remove the commas, if any, and replace them with spaces
+	//
+	while( $sub != $stringList ) 
+	{
+		// Do this only after the first time.
+		//
+		if( $sub != "" ) 
+			{
+			$List = $sub;
+		}
+
+		$sub = `substitute $Expr $stringList $replacer`;
+	}
+	
+	tokenize($List,$Array);
+}

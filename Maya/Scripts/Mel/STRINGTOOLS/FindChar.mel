@@ -1,0 +1,22 @@
+global proc int FindChar (string $item, string $testCharacter)
+{
+	string	$charList[] = `SeperateString $item`;
+	int		$returnInt = 0; 
+	int		$x;
+	
+	if (size($testCharacter) != 1)
+	{
+		$testCharacter = `GetFirstChar $testCharacter`;
+	}
+	
+	for ($x=0; $x<size($item); $x++)
+	{
+		if ($charList[$x] == $testCharacter)
+		{
+			$returnInt = ($x + 1);
+			break;
+		}
+	}
+	
+	return $returnInt;
+}

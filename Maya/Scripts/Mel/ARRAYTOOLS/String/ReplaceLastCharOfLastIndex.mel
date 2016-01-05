@@ -1,0 +1,12 @@
+global proc ReplaceLastCharOfLastIndex( string $array[], string $Char)
+{
+	int $len = ( size($array) - 1 );
+	
+	string $str = $array[$len];
+
+	$str = PopLastChar($str,$Char);
+	
+	$array[$len] = $str;
+
+		
+}

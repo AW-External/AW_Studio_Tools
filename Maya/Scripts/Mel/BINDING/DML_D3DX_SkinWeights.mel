@@ -1,0 +1,178 @@
+global proc DML_D3DX_SkinWeights(int $id)
+{
+	
+	//GET THE CURRENTLY SELECTED OBJECT
+	//
+	string $inputMesh = DML_PureName(`DML_FirstSelected`);
+	
+	string $D3DX_Skin[1000];
+	
+	//Open The File To Read The Skining Data
+	//
+	//int $id = `fopen "C:\\Temp\\DML_Data\\rawBindingData.txt" "r"`;
+	
+	//If and error accourse this makes sure the file still closes
+	//
+	//evalDeferred ("fclose "+$id+";");
+	
+	//Check The Header For The Correct String
+	//
+	if(gmatch( match( "SDDX SkinWeights",fgetline($id) ),"SDDX SkinWeights") )
+	{			
+		//Formate Check Before We Enter The While loop
+		//
+		if(gmatch( match( "StartFile",fgetline($id) ),"StartFile" ) )
+		{
+			//keep searching Till The End of The File is Reached
+			//
+			while(!(feof($id)))
+			{
+				//Check To See if the Next Line states That we have Reached Another Mesh
+				//		
+				if(gmatch( match( "MeshItem",fgetline($id) ),"MeshItem" ) )
+				{	
+					if(gmatch( match( $inputMesh,fgetline($id) ),$inputMesh) )
+					{
+						if(gmatch( match( "XHeader",fgetline($id) ),"XHeader" ) )
+						{	
+							string $HeaderData[3];
+							
+							tokenizeList((strip(`fgetline $id`)),$HeaderData);
+							
+							FPRINT_ITEM_WITH_TAB ("XSkinMeshHeader {");
+							FPRINT_ITEM_WITH_TAB ($HeaderData[0]+";");
+							FPRINT_ITEM_WITH_TAB ($HeaderData[1]+";");
+							FPRINT_ITEM_WITH_TAB ($HeaderData[2]+";");
+							FPRINT_ITEM_WITH_TAB ("}\n");
+						
+							while(strcmp( match( "EndItem",fgetline($id) ),"EndItem" ) ) 
+							{
+								if(gmatch( match( "Name",fgetline($id) ),"Name" ) )
+								{
+									FPRINT_ITEM_WITH_TAB("SkinWeights {");
+									
+									FPRINT_ITEM_WITH_TAB(("\"")+(strip(fgetline($id)))+("\"")+(";"));
+									
+									if(gmatch( match( "nWeights",fgetline($id) ),"nWeights" ) )
+									{	
+										FPRINT_ITEM_WITH_TAB(strip(fgetline($id))+";");
+									
+										if(gmatch( match( "Indices",fgetline($id) ),"Indices" ) )
+										{
+											string $list[200];
+											
+											int $i,$j;
+											
+											tokenizeList((strip(`fgetline $id`)),$list);
+											
+											for($i = 0,$j=size($list); $i<$j; $i++)
+											{
+												if($i<($j-1))
+													FPRINT_ITEM_WITH_TAB($list[$i]+",");
+												else
+												   FPRINT_ITEM_WITH_TAB($list[$i]+";");
+											}
+											
+											if(gmatch( match( "weights",fgetline($id) ),"weights" ) )
+											{
+												tokenizeList((strip(`fgetline $id`)),$list);
+											
+												for($i = 0,$j=size($list); $i<$j; $i++)
+												{
+													string $str = $list[$i];
+													
+													if(size($str)<7)
+													{
+														if(size($str)==1)
+														{
+															$str += ".00000";
+														}
+														else
+														{
+															while(size($str)<7)
+															{
+																$str += "0";
+															}
+														}
+													}
+													else if(size($str)>=7)
+													{
+														$str = substring($str,1,7);
+													}
+													 
+													if($i<($j-1))
+														FPRINT_ITEM_WITH_TAB($str+",");
+													else
+														FPRINT_ITEM_WITH_TAB($str+";");
+												}
+												
+												if(gmatch( match( "matrixOffset",fgetline($id) ),"matrixOffset" ) )
+												{
+												
+													tokenizeList((strip(`fgetline $id`)),$list);
+													
+													string $row;
+													
+													for($i = 0,$j=16; $i<$j; $i++)
+													{
+														string $str = $list[$i];
+													
+														if(size($str)<7)
+														{
+															if(`match "[.]" $str`==".")
+															{
+																while(size($str)<7)
+																{
+																	$str += "0";
+																}
+															}
+															else
+															{
+																$str += ".";
+																
+																while(size($str)<7)
+																{
+																	$str += "0";
+																}
+															}
+																
+														}
+														else if(size($str)>=7)
+														{
+															$str = substring($str,1,7);
+														}
+													 
+														if($i<($j-1))
+															$row += ($str+",");
+														else
+															$row += ($str+";;");
+															
+														if(($i==3)||($i==7)||($i==11)||($i==15))
+														{
+															FPRINT_ITEM_WITH_TAB $row;
+															$row = "";
+														}
+													}
+													
+													FPRINT_ITEM_WITH_TAB("}");
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			error"Formate was in correct\n";
+		}
+	}
+	else
+	{
+		error"Did Not Find Correct Header for Skining Data";
+	}
+}

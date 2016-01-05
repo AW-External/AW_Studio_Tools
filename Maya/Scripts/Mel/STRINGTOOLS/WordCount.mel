@@ -1,0 +1,8 @@
+global proc int WordCount (string $String)
+{
+	string	$tokenList[];
+	
+	tokenize $String "" $tokenList;
+	
+	return  `size $tokenList`;
+}

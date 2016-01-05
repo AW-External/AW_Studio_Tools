@@ -1,0 +1,123 @@
+proc int IsEmpty()
+{
+	global string $g_DML_Compond_Data_Array[];
+	
+	if(`size $g_DML_Compond_Data_Array[0]`)
+		return no;
+	else
+		return yes;
+}
+
+proc string GetBase()
+{
+	global string $g_DML_Compond_Data_Array[];
+	
+	return $g_DML_Compond_Data_Array[0];
+}
+
+
+global proc CompondDataClearBase()
+{
+	global string $g_DML_Compond_Data_Array[];
+	
+	$g_DML_Compond_Data_Array[0] = "";
+}
+
+global proc CompondDataClearAll()
+{
+	global string $g_DML_Compond_Data_Array[];
+	
+	clear $g_DML_Compond_Data_Array;
+}
+
+global proc CompondDataAdd(string $Flattend)
+{
+	global string $g_DML_Compond_Data_Array[];
+	
+	if(`size $Flattend`)
+	{
+		if(`IsEmpty`)
+		{
+			$g_DML_Compond_Data_Array[0] = $Flattend;
+		}
+		else if($Flattend==":")
+		{
+			$g_DML_Compond_Data_Array[0] = (`GetBase`+$Flattend);
+		}
+		else if((GetLastChar(`CompondDataGetBaseData`))==":")
+		{
+			$g_DML_Compond_Data_Array[0] = (`GetBase`+$Flattend);
+		}
+		else
+		{
+			$g_DML_Compond_Data_Array[0] = (`GetBase`+","+$Flattend);
+		}
+	}
+}
+
+global proc CompondDataAppendArray(string $Array[])
+{
+	CompondDataAdd `MakeCommaSeperated $Array`;
+}
+
+global proc CompondDataAppendItem(string $Item)
+{
+	CompondDataAdd $Item;
+}
+
+global proc CompondDataAppendFloat(float $Item)
+{
+	CompondDataAdd `FloatToString $Item`;
+}
+
+global proc CompondDataAppendFloatStriped(float $Item)
+{
+	string $s = `FloatToString $Item`;
+	int $i = $s;
+	CompondDataAdd `IntToString $i`;
+}
+
+global proc CompondDataAppendFloatArray(float $Array[])
+{
+	string $StrArray[];	
+	
+	float $FltArray[] = $Array;
+	
+	FloatToStringArray($StrArray,$FltArray,0);
+	
+	CompondDataAppendArray $StrArray;
+}
+
+global proc CompondDataAppendFloatArrayStriped(float $Array[])
+{
+	string $StrArray[];	
+	int $IntArray[];
+	float $FltArray[] = $Array;
+	
+	FloatToStringArray($StrArray,$FltArray,0);
+	StringToIntArray ($StrArray,$IntArray,0);
+	IntToStringArray($StrArray,$IntArray,0);
+	
+	CompondDataAppendArray $StrArray;
+}
+
+global proc CompondDataAppendInt(int $Item)
+{	
+	CompondDataAdd `IntToString $Item`;
+}
+
+global proc CompondDataAppendIntArray(int $Array[])
+{
+	string $StrArray[];
+	
+	int $IntArray[] = $Array;
+	
+	IntToStringArray($StrArray,$IntArray,0);
+	
+	CompondDataAppendArray $StrArray;
+}
+
+global proc CompondDataSeperator()
+{
+	CompondDataAdd ":";
+}

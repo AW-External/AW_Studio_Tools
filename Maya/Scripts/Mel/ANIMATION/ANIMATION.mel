@@ -1,0 +1,163 @@
+proc float[] FullQuat (float $Rotate_Vlaues[])
+{
+	float $Rotate_Quaterins[];
+	
+	int $i = 0;
+	
+	while($i < `size $Rotate_Vlaues`)
+	{
+		float $Angles[] = {$Rotate_Vlaues[$i++],$Rotate_Vlaues[$i++],$Rotate_Vlaues[$i++]};
+		
+		float $Heading  = ($Angles[1]);
+		float $Attitude = ($Angles[2]);
+		float $Bank     = ($Angles[0]);
+		
+		$Heading = deg_to_rad($Heading);
+		float $c1 = cos($Heading/2);
+		float $s1 = sin($Heading/2);
+		
+		$Attitude = deg_to_rad($Attitude);
+		float $c2 = cos($Attitude/2);
+		float $s2 = sin($Attitude/2);
+		
+		$Bank = deg_to_rad($Bank);
+		float $c3 = cos($Bank/2);
+		float $s3 = sin($Bank/2);
+		
+		float $qw = (($c1*$c2*$c3) - ($s1*$s2*$s3)); 
+		float $qx = (($s1*$s2*$c3) + ($c1*$c2*$s3));
+		float $qy = (($s1*$c2*$c3) + ($c1*$s2*$s3));
+		float $qz = (($c1*$s2*$c3) - ($s1*$c2*$s3));
+		
+		CombineFloatArrays $Rotate_Quaterins {$qw,$qx,$qy,$qz};
+	}
+	
+	return $Rotate_Quaterins;
+}
+
+proc string[] Animated_Joints()
+{
+	global float $G_Start,$G_End;
+	float $Rotate_Keyframes[50];
+	float $Rotate_Vlaues[50];
+	float $Scale_Keyframes[50];
+	float $Scale_Vlaues[50];
+	float $Translate_Keyframes[50];
+	float $Translate_Vlaues[50];
+	string $joint,$joints[50];
+	string $Handles[50];
+	string $effectedJoints[50];
+	string $HandleAnimations[50];
+	int $IndexRelations[50];
+	string $CompondIk[50];
+	
+	$CompondIk = `ComPondIkData`;
+	
+	for($i in DML_Range(0,`size $CompondIk`,1))
+	{
+		string $SubSet1[];
+		tokenize $CompondIk[$i] $SubSet1;
+		$Handles[$i] = $SubSet1[0];
+		$HandleAnimations[$i] = $SubSet1[2];
+		int $j = `tokenize $SubSet1[1] "," $SubSet1`;
+		for($j in DML_Range(0,$j,1))
+		{
+			$effectedJoints[`size $effectedJoints`] = $SubSet2[$j];
+			$IndexRelations[`size $IndexRelations`] = $i;
+		}
+	
+	}
+	
+	// Start Scaning Through All The Joints
+	// Check To see If The Current Joint Has Had
+	// KeyFrame Animation Applied To It
+	// If So Add It To The Running Tally
+	//
+	for($joint in `ls -long -type joint`){
+		if(keyframe("-query","-keyframeCount",$joint)){
+			$joints[size($joints)] = $joint;
+		}
+	}
+	for($joint in $joints){
+		
+		$Rotate_Keyframes = `KeyRangeReturn "rx ty tz" $joint`;
+		$Scale_Keyframes = `KeyRangeReturn "sx sy sz" $joint`;
+		$Translate_Keyframes = `KeyRangeReturn "tx ty tz" $joint`;
+		$Rotate_Vlaues = FullQuat(`ValueAtTimescmd $Rotate_Keyframes $joint 0`);
+		$Scale_Vlaues = ValueAtTimescmd(`$Scale_Keyframes $joint 1`);
+		$Translate_Vlaues ValueAtTimescmd(`$Translate_Keyframes $joint 2`);
+		
+		CompondDataAppendStringItem(`DML_PureName $joint`);
+		
+		CompondDataAppendInt(`size $Rotate_Keyframes`);
+		CompondDataAppendExtractFloatArrayStriped($Rotate_Keyframes[$i],0);
+		CompondDataMakeKey;
+		CompondDataMakeSet;
+		CompondDataMakeGroup "RotateTimes";
+		
+		CompondDataAppendExtractFloatArray($Rotate_Vlaues,0);
+		CompondDataMakeKey;
+		CompondDataMakeSet;
+		CompondDataMakeGroup "RotateValues";
+
+		CompondDataAppendInt(`size $Scale_Keyframes`);		
+		CompondDataAppendExtractFloatArrayStriped($Scale_Keyframes[$i],0);
+		
+		CompondDataMakeKey;
+		CompondDataMakeSet;
+		CompondDataMakeGroup "ScaleTimes";
+		
+		CompondDataAppendExtractFloatArray($Scale_Vlaues,0);
+		CompondDataMakeKey;
+		CompondDataMakeSet;
+		CompondDataMakeGroup "ScaleValues";
+		
+		CompondDataAppendInt(`size $Translate_Keyframes`);
+		CompondDataAppendExtractFloatArrayStriped($Translate_Keyframes[$i],0);
+		CompondDataMakeKey;
+		CompondDataMakeSet;
+		CompondDataMakeGroup "TranslateTimes";
+		
+		CompondDataAppendExtractFloatArray($Translate_Vlaues,0);
+		CompondDataMakeKey;
+		CompondDataMakeSet;
+		CompondDataMakeGroup "TranslateValues";
+	}
+	
+}
+
+global proc ANIMATION()
+{
+	global string $g_DML_Ik_Controled_Joints[];
+	global string $g_DML_Animated_Joints[];
+	global string $g_DML_Node_To_Act_on;
+	global float  $g_DML_Ik_keyFrames[];
+	global float  $g_DML_Ik_Values[];
+	global float  $g_DML_Rotate_Keyframes[];
+	global float  $g_DML_Scale_Keyframes[];
+	global float  $g_DML_Translate_Keyframes[];
+	global float  $g_DML_Rotate_Vlaues[];
+	global float  $g_DML_Rotate_Quaterins[];
+	global float  $g_DML_Scale_Vlaues[];
+	global float  $g_DML_Translate_Vlaues[];
+	global float  $G_Start,$G_End;
+	
+	ClearComplexCompondData;
+	
+	$G_Start = 1;
+	
+	$G_End = 48;
+	
+	int $i= $j = $k = 0;
+	
+	string $Node;
+	
+	Animated_Ik;
+	AddGroupsToComplexCompondData "IkJoints";
+	
+	Animated_Joints;
+	AddGroupsToComplexCompondData "KeyFrameJoints";
+
+}
+
+ANIMATION;

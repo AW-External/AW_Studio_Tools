@@ -1,0 +1,41 @@
+
+global proc BONE_DATA (string $FileName,string $Joint)
+  {
+    global string $Hard_DIR[];
+    global int $FILE[];
+    string $buffer[];
+    int $numTokens;
+    
+    float $m[] = `xform -q  -m  -ws $Joint`;
+
+    float $fmatrix[];
+    
+    $fmatrix[0] = $m[0]; $fmatrix[1] = $m[1]; $fmatrix[2] = ($m[2]); $fmatrix[3] = $m[3];
+
+    $fmatrix[4] = $m[4]; $fmatrix[5] = $m[5]; $fmatrix[6] = ($m[6]); $fmatrix[7] = $m[7];
+
+    $fmatrix[8] =($m[8]); $fmatrix[9] = ($m[9]); $fmatrix[10] = ($m[10]); $fmatrix[11] = $m[11];
+
+    $fmatrix[12] = $m[12]; $fmatrix[13] = $m[13]; $fmatrix[14] = ($m[14]); $fmatrix[15] = $m[15];
+    
+    string $smatrix[];
+    
+    $smatrix[0]  = `NUMBER_FORMATING $fmatrix[0]`;  $smatrix[1]  = `NUMBER_FORMATING $fmatrix[1]`;  $smatrix[2]  = `NUMBER_FORMATING $fmatrix[2]`;  $smatrix[3]  = `NUMBER_FORMATING $fmatrix[3]`;
+
+    $smatrix[4]  = `NUMBER_FORMATING $fmatrix[4]`;  $smatrix[5]  = `NUMBER_FORMATING $fmatrix[5]`;  $smatrix[6]  = `NUMBER_FORMATING $fmatrix[6]`;  $smatrix[7]  = `NUMBER_FORMATING $fmatrix[7]`;
+
+    $smatrix[8]  = `NUMBER_FORMATING $fmatrix[8]`;  $smatrix[9]  = `NUMBER_FORMATING $fmatrix[9]`;  $smatrix[10] = `NUMBER_FORMATING $fmatrix[10]`; $smatrix[11] = `NUMBER_FORMATING $fmatrix[11]`;
+
+    $smatrix[12] = `NUMBER_FORMATING $fmatrix[12]`; $smatrix[13] = `NUMBER_FORMATING $fmatrix[13]`; $smatrix[14] = `NUMBER_FORMATING $fmatrix[14]`; $smatrix[15] = `NUMBER_FORMATING $fmatrix[15]`;   
+
+    int $f = `fopen $FileName "w"`;
+    fprint $f "Frame Null {\n";
+    fprint $f "   FrameTransformMatrix {\n";
+    fprint $f ($smatrix[0]+","+$smatrix[1]+","+$smatrix[2]+","+$smatrix[3]+",\n");
+    fprint $f ($smatrix[4]+","+$smatrix[5]+","+$smatrix[6]+","+$smatrix[7]+",\n");
+    fprint $f ($smatrix[8]+","+$smatrix[9]+","+$smatrix[10]+","+$smatrix[11]+",\n");
+    fprint $f ($smatrix[12]+","+$smatrix[13]+","+$smatrix[14]+","+$smatrix[15]+";;\n");
+    fprint $f "{\n";
+    fclose $f;
+    
+  }

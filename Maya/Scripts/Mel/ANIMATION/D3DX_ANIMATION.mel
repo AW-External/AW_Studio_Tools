@@ -1,0 +1,499 @@
+proc CombineFloatArrays (float $array1[], float $array2[])
+{
+	float $x;
+	
+	// ADD THE TWO ARRAYS TOGETHER
+	for ($x in $array2)
+		$array1[size($array1)] = $x;
+}
+
+proc int RemoveDupFloats (float $Array[])
+{
+	int $irt, $Size = `size $Array`;
+	
+	float $Holder[] = $Array;
+	
+	clear $Array;
+	
+	for ($irt = 0; $irt < $Size; $irt++)
+	{
+        //////////////////////////
+		// Assine the next item //
+		// in the array to a    //
+		// single float         //
+		//////////////////////////
+        //
+		float $itemA = $Holder[$irt];
+		float $itemB;
+		
+        //////////////////////////
+		// if switch gets turned// 
+		// off that Means a dup //
+		// was found            //
+		//////////////////////////
+        //
+		int $add = on;
+		
+        //////////////////////////////////////
+		// Scan through the                 //
+		// Items add So Far                 //
+        // if The current item equals       //
+        // any item already in the set      //
+		// or the start key or the end key  //
+		// turn off the add switch          //
+		//////////////////////////////////////
+        //
+		for($itemB in $Array)
+			if(`equivalent $itemB $itemA`)
+				$add = off;
+                              else if(!$add)
+                                        break;
+		
+        ////////////////////////
+		// Check to see if we //
+		// need to add the    //
+		// current item       //
+		////////////////////////
+        //
+		if($add)
+			$Array[`size $Array`] = $itemA;
+	}
+	
+	$Array = `sort $Array`;
+	int $size = `size $Array`;
+	return $size;
+}
+
+proc FullQuat (float $Rotate_Vlaues[])
+{
+	global float $g_DML_Rotate_Quaterins[];
+	clear $g_DML_Rotate_Quaterins;
+	
+	int $i = 0;
+	
+	//float $Orientation[] = `joint -q -orientation`;
+	
+	while($i < `size $Rotate_Vlaues`)
+	{
+		float $Angles[] = {$Rotate_Vlaues[$i++],$Rotate_Vlaues[$i++],$Rotate_Vlaues[$i++]};
+		
+		float $Heading  = ($Angles[1]);
+		float $Attitude = ($Angles[2]);
+		float $Bank     = ($Angles[0]);
+		
+		$Heading = deg_to_rad($Heading);
+		float $c1 = cos($Heading/2);
+		float $s1 = sin($Heading/2);
+		
+		$Attitude = deg_to_rad($Attitude);
+		float $c2 = cos($Attitude/2);
+		float $s2 = sin($Attitude/2);
+		
+		$Bank = deg_to_rad($Bank);
+		float $c3 = cos($Bank/2);
+		float $s3 = sin($Bank/2);
+		
+		float $qw = (($c1*$c2*$c3) - ($s1*$s2*$s3)); 
+		float $qx = (($s1*$s2*$c3) + ($c1*$c2*$s3));
+		float $qy = (($s1*$c2*$c3) + ($c1*$s2*$s3));
+		float $qz = (($c1*$s2*$c3) - ($s1*$c2*$s3));
+		
+		CombineFloatArrays $g_DML_Rotate_Quaterins {$qw,$qx,$qy,$qz};
+	}
+}
+
+proc MakeKeys(string $Attr, string $obj,float $keys[])
+{
+	global float $G_Start,$G_End;
+	
+	string $cmd = "keyframe ";
+	
+	for($Attr in `stringToStringArray $Attr " "`) $cmd += (" -at "+$Attr+" ");
+	
+	$cmd += ("-time "+("\"")+$G_Start+":"+$G_End+("\"")+" -query -timeChange "+$obj+";");
+	
+	CombineFloatArrays $keys `eval $cmd`;
+}
+
+proc Animated_Ik()
+{
+////////////////////////////////////////////////////////////////
+// Get A List Of All Ik Handles That Have Had Animation       //
+// KeyFrames Applied To Them in the end these Keys will not   //
+// Be used to get animation Values of the ikHandles Them self //
+// instead they will be used to get the value                 //
+// on for every joint affected By ikHandles                   //
+////////////////////////////////////////////////////////////////
+          
+	global float $G_Start,$G_End;
+	global string $g_DML_Animated_Ik[];
+	global string $g_DML_Ik_Controled_Joints[];
+	global float $g_DML_Ik_keyFrames[];
+	global float $g_DML_Ik_Values[];
+	global float $g_DML_Rotate_Quaterins[];
+	clear $g_DML_Ik_Values;
+	clear $g_DML_Ik_keyFrames;
+	clear $g_DML_Ik_Controled_Joints;
+	
+    ////////////////////////////
+	// Gets A list of all the //
+	// ik handles in the scene//
+	////////////////////////////
+    //
+	string $Collector,$AllIkHandles[] = `ls -long -type ikHandle`;
+	
+	int $i,$k,$j = `size $AllIkHandles`;
+	
+    ///////////////////////////////////
+	// Scan Through All The          //
+	// Ik Handles And Determan       //
+	// What Joints They Are Affecting//
+	///////////////////////////////////
+    //
+	for( $Collector = "", $i = 0; $i < $j; $i++ )
+	{
+        ///////////////////////////////////////////
+		// Get The first joint Being             //
+		// Affected By The Current Ik Handle     //
+		// This Will be use As The Starting point//
+		///////////////////////////////////////////
+        //
+		string $startJoint = (longNameOf(stringArrayToString(`listConnections -type joint $AllIkHandles[$i]`,"")));
+		
+        ///////////////////////////////////
+		// Get The last joint that       //
+		// is under the control of the   //
+		// Current ik handle by using Ik //
+		// End Effector of given Ik      //
+		// handle is attached to         //
+		// This Will be use As           //
+		// The Stoping point             //
+		///////////////////////////////////
+        //
+		string $endJoint = (firstParentOf(stringArrayToString(stringArrayRemoveDuplicates(listConnections("-type","joint",(listConnections("-type","ikEffector",$AllIkHandles[$i])))),":")));
+		
+        ////////////////////////////////
+		// Add The First Joint in The //
+		// Ik Chain To our return list//
+		////////////////////////////////
+        //
+		$Collector += ($startJoint+" ");
+		
+        //////////////////////////////
+		// Continue Scaning From The//
+		// StratJoint until we      //
+		// reach the EndJiont       //
+		//////////////////////////////
+        //
+		while(!`isSameObject $startJoint $endJoint`)
+		{
+            /////////////////////////
+			// Get The Childern    //
+			// Of The Current Joint//
+            // Add To returnlist   //
+			/////////////////////////
+            //
+			$startJoint = (stringArrayToString(`listRelatives -fullPath -type joint $startJoint`,""));
+			$Collector += ($startJoint+" ");
+		}
+	}
+	
+	tokenize $Collector $g_DML_Ik_Controled_Joints;
+	
+    //////////////////////////////////////
+	// Scan Through All The ikHandles   //
+	// And Search For Any Animation Keys//
+	//////////////////////////////////////
+    //
+	for( $Collector = "", $i=0; $i < $j; $i++ )
+	{
+		if(keyframe("-query","-keyframeCount",$AllIkHandles[$i]))
+		{
+			$Collector += ($AllIkHandles[$i]+" ");
+		}
+	}
+          
+	//////////////////////////////////////
+	// Apply The Collected Animated     //
+	// ikHandles To The Global Variable //
+	//////////////////////////////////////
+    //
+	$j = `tokenize $Collector $g_DML_Animated_Ik`;
+	
+	string $Atts = "twi,rol,ikb,rx,ry,rz,tx,ty,tz:";
+	string $TimeRange = ($G_Start+","+$G_End+":");
+          
+	//////////////////////////////////////////////////////////
+	// Scan Through All Of the Animated ikHandles           //
+	// and for each one Collect collect all there           //
+	// keyframe Values And Make A Universal Keyframe        //
+	// Array Of All The Keys For All The Animated ikHandles //
+	//////////////////////////////////////////////////////////
+    //
+	for($i = 0; $i < $j; $i++ )
+	{
+		CombineFloatArrays $g_DML_Ik_keyFrames (eval (KeyRangeCmd("twi rol ikb rx ry rz tx ty tz",{$G_Start,$G_End},$g_DML_Animated_Ik[$i])));
+	}
+
+    //////////////////////////////////////////////
+	// This Removes All The Redundent KeyFrames //
+	// Then Sorts The List So That it is in     //
+	// Proper Numarical order$G_Start,$G_End;   //
+	//////////////////////////////////////////////
+    //
+	$j = `RemoveDupFloats $g_DML_Ik_keyFrames`;
+	$k = `size $g_DML_Ik_Controled_Joints`;
+	
+    ////////////////////////////////////////////////////////////
+	// Scan Through All The Joints That We Found Earler       //
+	// That Were Affected By Ik Handles And Using The         //
+	// KeyFrame Times That Were Collect From The              //
+	// Ik Handles That were Affecting Them                    //
+	// Because All The Values Will Be The Same                //
+	// Size This Will Make It Easer Later For Collecting them //
+	////////////////////////////////////////////////////////////
+    //
+	for($k in `DML_Range 0 $k 1`)
+	{
+		for($i = 0; $i < $j; $i++ )
+		{
+			CombineFloatArrays($g_DML_Ik_Values,(`getAttr -time $g_DML_Ik_keyFrames[$i] ($g_DML_Ik_Controled_Joints[$k]+".rotate")`));
+		}
+	}
+	
+	FullQuat $g_DML_Ik_Values;
+	
+	/////////////////////////////////////////////////////////////////////////////
+	// Now That All The Ik Animation Has Been Extracted                        //
+	// The Next Step Is To Collect The Data                                    //
+	// This Will Be Done By Converting All The Data into                       //
+	// String Values and Then Puting That Data into A Compond String           //
+	// With Various Breakers such as commas simicolones ect For Extrating Later//
+	/////////////////////////////////////////////////////////////////////////////
+	//
+	for($g_DML_Node_To_Act_on in $g_DML_Ik_Controled_Joints)
+	{
+        // Adds The Current Name 
+        // Of The Ik Controled Joint
+        //
+        CompondDataAppendStringItem(DML_PureName($g_DML_Node_To_Act_on));
+        
+        // Make a Spliter To Seperate 
+        // The Name From The 
+        // Key Frame Times
+        //
+        CompondDataSeperator();
+        
+        // Scan Through All The Key Frame Times
+        // and Add them to the compond Data
+        //
+		for($i = 0 ,$k = 0; $i < `size $g_DML_Ik_keyFrames`;$i++,$k = 0)
+		{
+			if($i==0)
+			{
+                // This OverRides The Oringanal
+                // First Keyframe and Replasees it with 
+                // The Input Value From The 
+                // Start DataRange Input
+                //
+				CompondDataAppendFloatStriped($G_Start);
+			}
+			else if($i == (`size $g_DML_Ik_keyFrames`-1))
+			{
+                // This OverRides The Oringanal
+                // Last Keyframe and Replasees it with 
+                // The Input Value From The 
+                // End DataRange Input
+                //
+				CompondDataAppendFloatStriped($G_End);
+			}
+			else
+			{
+				CompondDataAppendFloatStriped($g_DML_Ik_keyFrames[$i]);
+			}
+		}
+
+        // Make a Spliter To Seperate 
+        // The Key Frame Times
+        // From The Key Frame Values
+        //
+        CompondDataSeperator();
+		
+		for($i = 0,$k=0,$j=0; $i < `size $g_DML_Ik_keyFrames`;$i++,$k=0)
+		{
+			string $transfer[] = `FloatToString $g_DML_Rotate_Quaterins[$j++]`;
+			ExtractFloatToStringArray($StringArray,$FloatArray,$numberToCopy);
+			//CompondDataSeperator;
+		}
+	}
+}
+
+proc string[] Animated_Joints()
+{
+	global string $g_DML_Ik_Controled_Joints[];
+	global string $g_DML_Animated_Joints[];
+	clear $g_DML_Animated_Joints;
+	
+	string $joint,$joints[],$list[50];
+	
+	// Get A list of All The 
+    // joints in the scene
+	//
+	$list = `ls -long -type joint`;
+	
+	// For Safty's Sake To Make Sure We Don't output
+	// The Same Joint twice Remove All The Joint That
+	// Are Under Control Of Ik Hankdles
+	//
+	$list = stringArrayRemove($g_DML_Ik_Controled_Joints,$list);
+	
+	// Start Scaning Through All The Joints
+	//
+	for($joint in $list)
+	{
+		// Check To see If The Current Joint Has Had
+		// KeyFrame Animation Applied To It
+		//
+		if(keyframe("-query","-keyframeCount",$joint))
+		{
+			//Add it To the Final List
+			//
+			$joints[size($joints)] = $joint;
+		}
+	}
+	
+	// Apply The Collected Joint To The Global Variable
+	//
+	$g_DML_Animated_Joints = $joints;
+	
+	// Outputs A list Off All joints With Animation
+	//
+	return $joints;
+	
+}
+
+proc KeyFrames(string $joint)
+{
+	global float $G_Start,$G_End;
+	global float $g_DML_Rotate_Keyframes[];
+	global float $g_DML_Scale_Keyframes[];
+	global float $g_DML_Translate_Keyframes[];
+	global float $g_DML_Rotate_Vlaues[];
+	global float $g_DML_Scale_Vlaues[];
+	global float $g_DML_Translate_Vlaues[];
+	
+	clear $g_DML_Translate_Keyframes;
+	clear $g_DML_Scale_Keyframes;
+	clear $g_DML_Rotate_Keyframes;
+	clear $g_DML_Rotate_Vlaues;
+	clear $g_DML_Scale_Vlaues;
+	clear $g_DML_Translate_Vlaues;
+	
+	// Gets All The Rotate Scale & Translate 
+	// Keyframes Within The Givin Time Range
+	// For The Curret Input Joint
+	//
+	$g_DML_Rotate_Keyframes = (eval (KeyRangeCmd("rx ry rz",{$G_Start,$G_End},$joint)));
+	$g_DML_Scale_Keyframes = (eval (KeyRangeCmd("sx sy sz",{$G_Start,$G_End},$joint)));
+	$g_DML_Translate_Keyframes = (eval (KeyRangeCmd("tx ty tz",{$G_Start,$G_End},$joint)));
+	
+	// Avarages Each Key Value 
+	// To The Nearst Hole Number
+	// Removes Reduntent Keys
+	// And Returns The Total Count
+	// Of The KeyFrame Array
+	//
+	int $r = `RemoveDupFloats $g_DML_Rotate_Keyframes`;
+	int $s = `RemoveDupFloats $g_DML_Scale_Keyframes`;
+	int $t = `RemoveDupFloats $g_DML_Translate_Keyframes`;
+	
+	// Scan Through Each Keyframe Value 
+	// And Get xyz Data At That Time
+	// For The Curret Input Joint
+	//
+	for ($i=0; $i < $r; $i++) CombineFloatArrays($g_DML_Rotate_Vlaues,(`getAttr -time $g_DML_Rotate_Keyframes[$i] ($joint+".rotate")`));
+	for ($i=0; $i < $s; $i++) CombineFloatArrays($g_DML_Scale_Vlaues,(`getAttr -time $g_DML_Scale_Keyframes[$i] ($joint+".scale")`));
+	for ($i=0; $i < $t; $i++) CombineFloatArrays($g_DML_Translate_Vlaues,(`getAttr -time $g_DML_Translate_Keyframes[$i] ($joint+".translate")`));
+}
+
+global proc ANIMATION()
+{
+	
+	global string $g_DML_Ik_Controled_Joints[];
+	global string $g_DML_Animated_Joints[];
+	global string $g_DML_Node_To_Act_on;
+	global float  $g_DML_Ik_keyFrames[];
+	global float  $g_DML_Ik_Values[];
+	global float  $g_DML_Rotate_Keyframes[];
+	global float  $g_DML_Scale_Keyframes[];
+	global float  $g_DML_Translate_Keyframes[];
+	global float  $g_DML_Rotate_Vlaues[];
+	global float  $g_DML_Rotate_Quaterins[];
+	global float  $g_DML_Scale_Vlaues[];
+	global float  $g_DML_Translate_Vlaues[];
+	global float  $G_Start,$G_End;
+	
+	CompondDataClearAll;
+	
+	$G_Start = 1;
+	
+	$G_End = 48;
+	
+	int $i= $j = $k = 0;
+	
+	string $Node;
+	
+	Animated_Ik;
+	
+	//CompondDataAppendInt(`size $g_DML_Animated_Joints`+`size Ik_Controled_Joints`);
+	
+	//CompondDataSeperator;
+	
+	for($g_DML_Node_To_Act_on in $g_DML_Ik_Controled_Joints)
+	{
+		//CompondDataAppendItem(`DML_PureName $g_DML_Node_To_Act_on`);
+		
+		//CompondDataSeperator;
+		
+		//CompondDataAppendInt(`size $g_DML_Ik_keyFrames`);
+		
+		//CompondDataSeperator;
+		
+		for($i = 0 ,$k = 0; $i < `size $g_DML_Ik_keyFrames`;$i++,$k = 0)
+		{
+			if(!$i)
+			{
+				//CompondDataAppendFloatStriped $G_Start;
+			}
+			else if($i == (`size $g_DML_Ik_keyFrames`-1))
+			{
+				//CompondDataAppendFloatStriped $G_End;
+			}
+			else
+			{
+				//CompondDataAppendFloatStriped $g_DML_Ik_keyFrames[$i];
+			}
+		}
+		
+		//CompondDataSeperator;
+		
+		for($i = 0,$k=0,$j=0; $i < `size $g_DML_Ik_keyFrames`;$i++,$k=0)
+		{
+			string $transfer[];
+			
+			while($k<4)
+				$transfer[$k++] = `FloatToString $g_DML_Rotate_Quaterins[$j++]`;
+			
+			//CompondDataAppendArray $transfer;
+			
+			//CompondDataSeperator;
+		}
+	}
+	
+	for($g_DML_Node_To_Act_on in $g_DML_Animated_Joints)
+	{
+
+	}
+}
+
+ANIMATION;

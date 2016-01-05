@@ -1,0 +1,45 @@
+global proc DML_GUI_FIND_DIRECTORY (string $dirpath,string $fileType)
+{
+    global string $G_UI_Textfield_Current_Directory,
+                  $G_UI_Textfield_Current_Name,
+                  $G_UI_TextScrollList_Folders,
+                  $G_UI_TextScrollList_Files,
+                  $G_UI_Button_Director_Name;
+                  
+    string $dir;
+    $dirpath = ($dirpath+"/");
+    //clear the all the items in the folder pannal
+    //
+    textScrollList -e -removeAll $G_UI_TextScrollList_Folders;
+    
+    //Clear the all the files from the file pannal
+    //
+    textScrollList -e -removeAll $G_UI_TextScrollList_Files;
+    
+    //If there are now Files No need to check anything thats just silly
+    //
+    if(size(`getFileList -folder $dirpath `)!=0)
+    {
+        // scan through all the file in the new directory
+        //
+        for ($dir in `getFileList -folder $dirpath `)
+        {   
+            //detereman if the current file is a file or foulder
+            //
+            if (`filetest -d ($dirpath+$dir)`)
+            {
+                //if the file is a foulder add it to the foulder pannal
+                //
+                textScrollList -e -append $dir $G_UI_TextScrollList_Folders;
+            }
+            else
+            {   
+                //other wise place it in the file pannal
+                //
+                textScrollList -e -append $dir $G_UI_TextScrollList_Files;
+            }
+        }
+    }
+                  
+    textField -edit -text $dirpath $G_UI_Textfield_Current_Directory;
+}

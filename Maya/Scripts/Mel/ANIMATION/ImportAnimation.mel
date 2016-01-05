@@ -1,0 +1,50 @@
+proc foo ( float $f[], string $s[]) 
+{ 
+	print("size of f=" + size($f) + "\n"); 
+	for ( $i=0; $i < size($f); ++$i ) 
+	{ 
+		print("f[" + $i + "]=" + $f[$i] + "\n"); 
+	} 
+	print("size of s=" + size($s) + "\n"); 
+	for ( $i=0; $i < size($s); ++$i )
+	{ 
+		print("s[" + $i + "]=" + $s[$i] + "\n"); 
+	} 
+}
+
+global proc getAnim(string $fileName, string $objectName) 
+{ 
+   //open the file for reading 
+   $fileId=`fopen $fileName "r"`; 
+    
+   //get the first line of text 
+   string $nextLine = `fgetline $fileId`; 
+    
+   //while $nextline is not emtpy(end of file) do the following  
+    
+   while ( size( $nextLine ) > 0 ) { 
+    	 
+        //tokenize(split) line into separate elements of an array   
+    	string $rawAnimArray[]; 
+        tokenize ($nextLine, " ",$rawAnimArray); 
+        //place each element of the array into separate variables  
+        print $rawAnimArray; 
+        float $frame=$rawAnimArray[0]; 
+        float $x=$rawAnimArray[1]; 
+        float $y=$rawAnimArray[2]; 
+        float $z=$rawAnimArray[3]; 
+   
+        //change the currentTime and set keys for tx, ty, tz 
+        currentTime $frame ; 
+        setAttr ($objectName+".tx") $x; 
+        setKeyframe ($objectName+".tx"); 
+        setAttr ($objectName+".ty") $y; 
+        setKeyframe ($objectName+".ty"); 
+        setAttr ($objectName+".tz") $z; 
+        setKeyframe ($objectName+".tz"); 
+        //get the next line in the ascii file.        
+        $nextLine = `fgetline $fileId`; 
+   } 
+   //close file  
+   fclose $fileId; 
+} 

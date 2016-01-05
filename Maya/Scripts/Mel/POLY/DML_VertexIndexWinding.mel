@@ -1,0 +1,18 @@
+global proc int[] DML_VertexIndexWinding()
+{
+
+    int $numbers[]; clear$numbers;
+
+    string $v;
+
+    for ($v in `DML_ComponetList vtxf`)
+    {
+        string $uv_index = (stringArrayToString (`polyListComponentConversion -toUV $v `,""));
+
+        $uv_index = `match "(\\[.+)" $uv_index `;
+
+        $numbers[size($numbers)] = (`match "([0-9]+)" $uv_index `);
+    }
+
+    return $numbers;
+}

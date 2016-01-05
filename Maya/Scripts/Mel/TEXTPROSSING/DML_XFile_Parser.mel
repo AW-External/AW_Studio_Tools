@@ -1,0 +1,409 @@
+//CREATES AN ARRAY FROM 0 TO ($J-1)
+///////////////////////////
+proc int[] range (int $j)//
+{
+    int $range[];
+    while(`size $range` < $j)
+        $range[`size $range`]= `size $range`;
+        
+    return $range;
+}
+
+proc string makeSpace(string $SLines[])
+{
+    string $return = ""; 
+    int $j = size(`match "^[ ]+" $SLines[1]`);
+    int $i;
+    for($i in `range $j`)
+    {
+        $return += " ";
+    }
+    return $return;
+}
+
+//OPENS A FILE THEN SCANS AND SAVES EACH LINE AS IN A SEPERATE INDEX
+//BYPASERS EMPTY ONES AND CHOPS THE
+//NEWLINE '/n' RETURN FROM THE END
+/////////////////////////////////////////////////////////
+proc string[] Import_File_Data (string $Full_Path_Name)//
+{
+    string $File[6000];
+    
+    //OPENS FILE FOR SCANNING
+    /////////////////////////////////////////
+    int $Id = fopen($Full_Path_Name,"r");//
+    
+    //KEEPS A WORKING TALLY OF HOW 
+    //MANY LINES HAVE BEEN RETREVED
+    //SECONDS AS AND ITARATOR
+    //////////////////////////
+    int $Counter = 0;////////
+    
+    //CHECK TO MAKE SURE 
+    //THERE IS DATA IN THIS 
+    //FILE BEFORM SETING
+    //TILL END OF FILE FUCTION
+    ///////////////////////////
+    if(size(`fgetline $Id`))//
+    {
+        //AFTER CONFERMING DATA
+        //RESETS THE FILE
+        //AND STARTS FREASH
+        ///////////////
+        frewind $Id;//
+        
+        //DON'T STOP
+        //TILL END OF FILE
+        /////////////////////
+        while(!`feof $Id`)//
+        {
+            //GRAB THE NEXT LINE FROM THE FILE
+            /////////////////////////////////////
+            $File[$Counter] =  `fgetline $Id`;//
+            
+            //MAKES SURE THAT WE ARE NOT GRABING A 
+            //BLANK OR EMPTY LINE BECAUSE 
+            //THAT WOULD BE DUMB
+            //////////////////////////////////////////////////////
+            if(size(`match "[\[.a-zA-Z},{0-9;]" $File[$Counter]`))//
+            {
+                //ADDS EVERYTHING BUT THE NEWLINE RETURN "\N"
+                //////////////////////////////////////////////////////////////////////////////
+                $File[$Counter] = `substring $File[$Counter] 1 (size($File[$Counter]) -1)`;//
+                $Counter++;
+            }
+        }
+    }
+    
+    fclose $Id;
+    
+    return $File;
+}
+
+
+proc int insertmeshShaders(int $add, int $insert[],string $OutFile[], string $File2[], string $SLines[])
+{
+    int $i = $insert[0];
+    
+    int $Stop = on;
+    
+    while($Stop)
+    {
+        string $check = $File2[$i++];
+        
+        if(`gmatch $check ("#Start Sharder set#")`)
+        {
+            while($Stop)
+            {
+                 string $check = $File2[$i++];
+                 
+                 if(`gmatch $check ("#End Sharder set#")`)
+                 {
+                    $Stop = 0;
+                 }
+                 else
+                 {
+                    string $space = `makeSpace $SLines`;
+                    $OutFile[$add++] = ($space+"   "+$check);
+                 }
+            }
+        }
+    }
+    $insert[0] = $i;
+    return $add;
+}
+
+proc int insertSceneShaders(int $add, int $insert[],string $OutFile[], string $File2[])
+{
+    int $i = 0;
+    
+    int $Stop = on;
+    
+    int $breaker = `size $File2`;
+    
+    while($Stop)
+    {
+        string $check = $File2[$i++];
+        
+        if(`gmatch $check ("##SceneMaterials")`)
+        {
+            while($Stop)
+            {
+                 string $check = $File2[$i++];
+                 
+                 if(`gmatch $check ("##SceneMaterials")`)
+                 {
+                    $Stop = 0;
+                 }
+                 else
+                 {
+                    $OutFile[$add++] = $check;
+                 }
+            
+            }
+            
+        }
+    }
+    
+    $insert[0] = $i;
+    
+    return $add;
+}
+
+/*
+Inputs
+    1.    StringArray Of Imported File.
+    2.    IntArray Where index (0 1 2) Make Refference To (Previous Current Next) Index's of Input 1.
+    3.    StringArray Where index (0 1 2) Holds Refference To Input 1 Using input 2 indexing
+*/
+proc Line_Modder (string $InFile[],
+                    int $ILines[],
+                    string $SLines[],
+                    string $Mend_Lines[],
+                    string $Mname_Lines[])
+{
+    int $i;
+    for( $i in range(3) )
+    {
+        $ILines[$i] = ($ILines[$i] + 1);
+        $SLines[$i] = $InFile[$ILines[$i]];
+        
+        //MATCHES THE LAST CHAR IN THE STRING
+        //////////////////////////////////
+        $Mend_Lines[$i] = `match ".$" $SLines[$i]`;
+        
+        //MATCHES ONLY THE LETTERS OF THE STRING 
+        //////////////////////////////////////////////////
+        $Mname_Lines[$i] = `match "^[a-zA-Z]+" (strip($SLines[$i]))`;
+    }
+}
+
+//A TEMPLATE IS JUST ONE CONTAINER OF DATA
+//NORMALY ALL TEMPLATES ARE CHUNKED TOGATHER AT THE TOP OF THE FILE SO 
+//ONCE THIS ONE IS DONE CHECK FOR ANOTHER
+proc int template_Scanner(
+                        string $InFile[],
+                        int $ILines[],
+                        string $SLines[],
+                        string $Mend_Lines[],
+                        string $Mname_Lines[],
+                        string $OutFile[],
+                        int $add,
+                        int $End
+                    )
+{
+    
+    string $EnterContainer = ("{");
+    
+    string $ExitContainer = ("}");
+    
+    string $semicolon = (";");
+    
+    string $Dubblesemicolon = (";;");
+    
+    string $comma = (",");
+    
+    string $template = ("template");
+    
+    int $Breaker = on;
+    
+    //NORMALY ALL TEMPLATES ARE CHUNKED TOGATHER
+    //AT THE TOP OF THE FILE SO ONCE THIS ONE IS DONE CHECK FOR ANOTHER
+    //////////////////
+    while($Breaker)//
+    {
+        Line_Modder($InFile,$ILines,$SLines,$Mend_Lines,$Mname_Lines);
+        
+        //START GRABING THE REST OF THE TEMPLET DATA
+        /////////////////////////////////
+        $OutFile[$add++] = $SLines[1];//
+        
+        if(`gmatch $Mend_Lines[1] $ExitContainer`)
+        {
+            if((!`gmatch $Mname_Lines[2] $template`)||($ILines[1] > $End))
+                $Breaker = off;
+        }
+    }
+    return $add;
+}
+
+/*
+ALL MATERIALS ARE CHUNKED TOGATHER WITHIN THE MESHMATERIALLIST
+SO ONCE THIS ONE IS DONE CHECK FOR ANOTHER
+THERE IS ONE CONTAINER TYPE THAT THE MATERIAL CONTAINER MAY OR MAY NOT HAVE
+CALLED TEXTUREFILENAME SO WE HAVE TO COMPINSATE FOR THE ENTERCONTAINER AND EXITCONTAINER CHECK
+*/
+proc int Material_Scanner(
+/*                        */string $InFile[],
+/*                        */int $ILines[],
+/*                        */string $SLines[],
+/*                        */string $Mend_Lines[],
+/*                        */string $Mname_Lines[],
+/*                        */string $OutFile[],
+/*                        */int $add,
+/*                        */int $End
+/*                        */)
+{
+    string $EnterContainer = ("{");
+    string $ExitContainer = ("}");
+    string $semicolon = (";");
+    string $Dubblesemicolon = (";;");
+    string $comma = (",");
+    string $texture = ("TextureFilename");
+    string $Material = ("Material");
+    
+    int $MaterialBreaker = on;
+    
+    while($MaterialBreaker)
+    {
+        Line_Modder($InFile,$ILines,$SLines,$Mend_Lines,$Mname_Lines);
+        
+        if(`gmatch $Mend_Lines[2] $EnterContainer`)
+        {
+            if(`gmatch $Mname_Lines[2] $texture`)
+            {
+                int $textureBreaker = on;
+                
+                while($textureBreaker)
+                {
+                    Line_Modder($InFile,$ILines,$SLines,$Mend_Lines,$Mname_Lines);
+                    
+                    if(`gmatch $Mend_Lines[1] $ExitContainer`)
+                    {
+                        if((`gmatch $Mname_Lines[1] $texture`)&&($ILines[1] < $End))
+                        {
+                            $textureBreaker = off;
+                            $MaterialBreaker = off;
+                        }
+                        
+                        if(!`gmatch $Mname_Lines[1] $texture`)
+                        {
+                            $textureBreaker = off;
+                            
+                            Line_Modder($InFile,$ILines,$SLines,$Mend_Lines,$Mname_Lines);
+                        }
+                    }
+                }
+            }
+            
+            if((`gmatch $Mend_Lines[1] $ExitContainer`)||($ILines[1] < $End))
+            {
+                if((`gmatch $Mend_Lines[2] $ExitContainer`)&&(`gmatch $Mend_Lines[0] $ExitContainer`))
+                {
+                    $MaterialBreaker = off;
+                }
+            }
+        }
+    }
+    return $add;
+}
+
+global proc DML_XFile_Parser()
+{
+	string $filelist1[] = `getFileList -folder "C:\\DML_Temp\\OpsXfiles\\" -filespec "*.*"`;
+	string $filelist2[] = `getFileList -folder "C:\\DML_Temp\\Xfiles\\" -filespec "*.*"`;
+	int $itr;
+	for($itr in `DML_Range 0 (size($filelist1)) 1`)
+	{
+		
+		string $Sys_file1 = ("C:\\DML_Temp\\OpsXfiles\\"+$filelist1[$itr]);
+		string $Sys_file2 = ("C:\\DML_Temp\\Xfiles\\"+$filelist2[$itr]);
+		string $InFile[1000]; clear $InFile;
+		string $OutFile[1000];clear $OutFile;
+		
+		$InFile = `Import_File_Data $Sys_file1`;
+		$InFile2 = `Import_File_Data $Sys_file2`;
+		
+		int $add = 0;
+		int $insert[] = {0};
+		int $End = `size $InFile`;
+		
+		int $ILines[] = {-1,0,1};
+		
+		string $SLines[] = {"",$InFile[0],$InFile[1]};
+		string $Mend_Lines[3]; clear $Mend_Lines;
+		string $Mname_Lines[3];clear $Mname_Lines;
+		
+		string $EnterContainer = ("{");
+		string $ExitContainer = ("}");
+		string $semicolon = (";");
+		string $Dubblesemicolon = (";;");
+		string $comma = (",");
+		string $XHeader = ("xof 0303txt 0032");
+		
+		//MAKE SURE IT HAS THE RIGHT HEADER
+		//ASLO USED TO VERYFY THE DATA WAS
+		//IMPORTED CORRECTLY
+		///////////////////////////////////
+		if(gmatch((strip($SLines[1])),$XHeader))
+		{
+			//ADD THE HEADER TO THE OUTPUT FILE
+			///////////////////////////////
+			$OutFile[$add++] = $XHeader;//
+			
+			//SCAN THROUGH THE ENTIRE STRING ARRAY
+			///////////////////////////
+			while($ILines[1] < $End)//
+			{
+				Line_Modder($InFile,$ILines,$SLines,$Mend_Lines,$Mname_Lines);
+				
+				//CHECK TO SEE IF THE LAST CHAR TO SEE IF WE ARE ENTERING A CONTAINER OF DATA
+				/////////////////////////////////////////////
+				if(`gmatch $Mend_Lines[1] $EnterContainer`)//
+				{
+					//DETERMAN THE TYPE OF CONTAINER BY ITS NAME AND TAKE THE APROPREATE ACTION
+					/////////////////
+					switch ($Mname_Lines[1])
+					{
+					case "template":
+						$OutFile[$add++] = $SLines[1];
+						$add = (template_Scanner($InFile,$ILines,$SLines,$Mend_Lines,$Mname_Lines,$OutFile,$add,$End));
+						$add = (insertSceneShaders($add,$insert,$OutFile,$InFile2));
+						break;
+						
+					case "Frame":
+						{
+							int $breaker = 1;
+							
+							$OutFile[$add++] = $SLines[1];
+							
+							while($breaker)
+							{   
+								Line_Modder($InFile,$ILines,$SLines,$Mend_Lines,$Mname_Lines);
+								
+								switch ($Mname_Lines[1])
+								{
+								case "Material":
+									$add = (Material_Scanner($InFile,$ILines,$SLines,$Mend_Lines,$Mname_Lines,$OutFile,$add,$End));
+									$add = (insertmeshShaders($add,$insert,$OutFile,$InFile2,$SLines));
+									break;
+									
+								default:
+									string $space = `makeSpace $SLines`;
+									$OutFile[$add++] = ($space+$SLines[1]);
+								}
+								
+								if($ILines[1] > $End)
+								{
+									$breaker = 0;
+								}
+							}
+						}
+						break;
+					}   
+				}
+			}
+		}
+		
+		string $line;
+		
+		int $Id = `fopen ("C:\\DML_Temp\\ReparsedXfiles\\"+$filelist2[$itr]) "w"`;
+		
+		for($line in $OutFile)
+		{
+			fprint $Id($line+"\n");
+		}
+		
+		fclose $Id;
+	}
+}

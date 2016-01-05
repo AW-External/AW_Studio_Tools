@@ -1,0 +1,28 @@
+global proc int[] DML_Range (int $start,int $stop,int $ink )
+{
+    //Do a check to make sure the start number is larger than the stoping number
+    //
+    if($start>$stop)
+        error ("the starting value '"+$start+"' is Larger then the stoping value '"+$stop+"'");
+        
+    // int array to hold the return value
+    //
+    int $range[];
+    
+    //start making the Ranged Integer Array
+    //
+    while($start<$stop)
+    {
+        //Tack on the next Number to End of the Array
+        //
+        $range[size($range)]=$start;
+        
+        //set the next Number to be tacked on
+        //
+        $start+=$ink;
+    }
+    
+    //output the newly created Integer Array
+    //
+    return $range;
+}

@@ -1,0 +1,10 @@
+global proc vector StringToVector (string $value)
+{
+	string $newvalue[];
+	
+	tokenize $value "<<>>" $newvalue;
+	
+	vector $xyz = ("<<"+$newvalue[0]+">>");
+	
+	return $xyz;
+}

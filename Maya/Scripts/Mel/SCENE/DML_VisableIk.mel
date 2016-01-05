@@ -1,0 +1,5 @@
+global proc string[] DML_VisableIk()
+{
+	string $Handles[] = `ls -v -type "ikHandle"`;
+	return $Handles;
+}

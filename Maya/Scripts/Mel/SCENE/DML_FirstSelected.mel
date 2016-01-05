@@ -1,0 +1,12 @@
+global proc string DML_FirstSelected()
+{
+	if(size(`ls -long -sl`))
+	{
+    	string $selectionlist[] = `ls -long -sl`;
+    	return $selectionlist[0];
+	}
+	else
+	{
+		error "There Was Nothing Selected";
+	}
+}

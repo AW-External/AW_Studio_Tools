@@ -1,0 +1,41 @@
+//action: 			this one will return the index of an item
+//					where it exists in the supplied array. It is short circuited to find only
+//					the first instance. -1 is returned if the object does not exist in the array.
+//
+//Examples:
+//
+//					string $myTestArray[] = {"red", "blue", "green"};
+//					string $myTestString = "red";
+//					itemNthString $myTestString $myTestArray;
+//					// Result: 0 //
+//					string $myTestArray[] = {"red", "blue", "green"};
+//					string $myTestString = "blue";
+//					itemNthString $myTestString $myTestArray;
+//					// Result: 1 //
+//					string $myTestArray[] = {"red", "blue", "green"};
+//					string $myTestString = "green";
+//					itemNthString $myTestString $myTestArray;
+//					// Result: 2 //
+//					string $myTestArray[] = {"red", "blue", "green"};
+//					string $myTestString = "yellow";
+//					itemNthString $myTestString $myTestArray;
+//					// Result: -1 //
+
+
+
+global proc int FindItemIndex (string $item, string $array[])
+{
+	int $x;
+	int $theIndex = -1;
+
+	for ($x=0; $x<size($array); $x++)
+	{
+		if ($array[$x] == $item)
+		{
+			$theIndex = $x;
+			break;
+		}
+	}
+
+	return ($theIndex);
+}

@@ -1,0 +1,23 @@
+global proc InsertItem ( string $array[], string $Element, int $index)
+{
+	int $i,$j,$len = `size $array`;
+	
+	string $copy[] = $array;
+
+	clear $array;
+
+	for ($i=0 , $j=0 ; $i<$len ; $i++ )
+	{
+		if ($i != $index)
+		{
+			$array[$j++] = $copy[$i];
+		}
+		else
+		{
+			$array[$j++] = $Element;
+			
+			$array[$j++] = $copy[$i];
+		}
+	}	
+		
+}

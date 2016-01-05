@@ -1,0 +1,8 @@
+global proc DML_IsFileSaved ()
+{
+    //CHECKS TO SEE IF THE SCENE IS SAVEDED
+    if(!(size(`file -q  -sceneName`)))
+    {
+        error "please save your scene Befor using SDDX Exporter\n";
+    }
+}

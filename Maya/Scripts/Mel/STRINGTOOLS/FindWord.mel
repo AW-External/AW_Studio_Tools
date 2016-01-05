@@ -1,0 +1,17 @@
+global proc int FindWord(string $item, string $matchString)
+{
+	string	$List[];
+	int 	$x;
+	
+	$matchString = `strip $matchString`;
+	
+	int $count = `tokenize $item " " $List`;
+	
+	for ($x=0; $x<$count; $x++)
+	{
+		if ((`strip $List[$x]`) == $matchString)
+			return $x;
+	}
+	
+	return -1;
+}

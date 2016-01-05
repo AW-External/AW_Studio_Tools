@@ -1,0 +1,22 @@
+global proc string PopFirstWord (string $item)
+{
+	string	$List[];
+	string	$returnString;
+	int		$x;
+	
+	tokenize $item " " $List;
+	
+	for ($x=1; $x<size($List); $x++)
+	{
+		if ($x != (size($List)-1))
+		{
+			$returnString += ($List[$x] + " ");
+		}
+		else
+		{
+			$returnString += $List[$x];
+		}
+	}
+	
+	return $returnString;
+}

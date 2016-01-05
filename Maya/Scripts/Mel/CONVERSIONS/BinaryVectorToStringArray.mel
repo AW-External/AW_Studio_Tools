@@ -1,0 +1,118 @@
+global proc int BinaryVectorToStringArray(string $StringArray[], vector $VectorArray[],string $range)
+{
+	int $id = 0;
+	
+	if(`match ":" $range`==":")
+	{
+		int $Start = StringToInt(`match"^[0-9]+" $range`);
+		
+		int $End = StringToInt(`match "[0-9]+$" $range`);
+			
+		if((!$Start)&&(!$End))
+		{
+			$End = `size $VectorArray`;
+		}
+		
+		if($Start>$End)
+		{
+			error ("Start Value is Larger Than The End Value\n");
+			return 0;
+		}
+		else if(!`size $VectorArray`)
+		{
+			warning ("BinaryFloatToStringArray input Array Was Empty\n");
+			return 0;
+		}
+		$id = `fopen "C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt" "w"`;
+		
+		if(!$id)
+		{
+			error ("Was Unable To Open The File C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt For Writing\n");
+		}
+		else
+		{
+			int $i = $Start;
+			
+			while($i<$End)
+			{
+				float $FloatArray[] = $VectorArray[$i++];
+				fwrite $id ($FloatArray[0]);
+				fwrite $id ($FloatArray[1]);
+				fwrite $id ($FloatArray[2]);
+			}
+		}
+		
+		if(!`fclose $id`)
+		{
+			vector $VectorHolder[] = $VectorArray;
+			
+			clear $VectorArray;
+			
+			int $i = 0;
+			
+			while($i<$Start)
+			{
+				$VectorArray[$i] = ($VectorHolder[$i++]);
+			}
+			
+			int $j = $End;
+			
+			while($j<`size $VectorHolder`)
+			{
+				$VectorArray[$i++] = ($VectorArray[$j++]);
+			}
+		}
+		else
+		{
+			error ("Was Unable To Close C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt\n");
+		}
+
+		$id = `fopen "C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt" "r"`;
+		
+		if(!$id)
+		{
+			error ("Was Unable To Open The File C:\\DML_Temp\\HardCopy_ReadBack\\HardCoded_Data_Values.txt For Reading\n");
+		}
+		else
+		{
+			clear $StringArray;
+			
+			string $s;
+			
+			float $f;
+			
+			int $i,$nValues = ($End - $Start);
+			
+			while($i<$nValues)
+			{
+				$s = `fread $id $f`;
+				
+				if(`match "[\.]" $s` == ".")
+				{
+					if(`match "e" $s` == "e")
+					{
+						$s = ("0.0");
+					}
+				}
+				else
+				{
+					if(`match "e" $s` == "e")
+					{
+						$s =  ("0.0");
+					}
+					else
+					{
+						$s += (".0");
+					}
+				}
+				$StringArray[$i++] = $s;
+			}
+		}
+		fclose $id;
+	}
+	else
+	{
+		return 0;
+	}
+	return 1;
+}

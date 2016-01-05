@@ -1,0 +1,11 @@
+global proc int DML_IsMesh (string $Transform)
+{
+    if(`DML_ShapeType $Transform` == "mesh")
+    {
+        return yes;
+    }
+    else
+    {
+        return no;
+    }
+}

@@ -1,0 +1,24 @@
+global proc string DML_Striper (string $str)
+{
+	string $Expr = " ";
+	string $replacer = "";
+	string $Striped = "";
+	string $sub = "";
+	
+	// Remove the " " if any, and replace them with Nothing
+	//
+	while( $sub != $str ) 
+	{
+		// Do this only after the first time.
+		//
+		if( $sub != "" ) 
+			{
+			$str = $sub;
+		}
+
+		$sub = `substitute $Expr $str $replacer`;
+	}
+	$Striped = `substring $sub 2 (size($sub)-1)`;
+	
+	return $Striped;
+}

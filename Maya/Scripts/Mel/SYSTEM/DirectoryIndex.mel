@@ -1,0 +1,33 @@
+proc int DirectoryIndex (string $DirectoryName)
+{
+    global string $G_DML_Directory_System[];
+    global string $G_DML_Directory_System[];
+	int $i;
+	
+	int $j = `size $G_DML_Directory_System`;
+	
+	for( $i = 0; $i < $j; $i++)
+		if(`gmatch $G_DML_Directory_System[$i] $DirectoryName`) return $i;
+        
+    error "No directorys with that name";
+}
+
+proc int FileIndex (string $FileName)
+{
+    global string $G_DML_Filing_System[];
+    
+	int $i;
+	
+	int $j = `size $G_DML_Directory_System`;
+	
+	for( $i = 0; $i < $j; $i++)
+		if(`gmatch $G_DML_Directory_System[$i] $DirectoryName`) return $i;
+        
+    error "No directorys with that name";
+}
+
+global proc FileFinder (string $DirectoryName, string $FileName)
+{
+    int $Dir = `DirectoryIndex $DirectoryName`;
+    
+}

@@ -1,0 +1,91 @@
+global proc SDDXSceneCleaner ()
+{
+    source "cleanUpScene";
+	select `ls -type transform`;
+	doBakeNonDefHistory( 1, {"prePost" });
+
+	//	1. Delete invalid nurbs curves and surfaces	
+	deleteInvalidNurbs(0);
+	
+	deleteUnusedCommon_Multi({"stitchSrf","rebuildSurface","insertKnotSurface","avgNurbsSurfacePoints"},0, "Deleting unused point constraints" );
+	//	2. Delete unused nurbs curves
+	//
+	deleteUnusedInUnusedHierarchy( "nurbsCurve", 0,"Deleting unused NURBS curves" );
+
+	//	3. Delete unused locators
+	//
+	//deleteUnusedLocators();
+
+	//	4. Delete unused constraints
+	//
+	deleteUnusedConstraints();
+
+	//	5. Delete unused pairBlends
+	//
+	deleteUnusedPairBlends();
+
+	//	6. Delete unused deformers
+	//
+	deleteUnusedDeformers();
+
+	//	7. Delete unused skin influences
+	//
+	removeAllUnusedSkinInfs();
+	
+	//	8. Delete unused expressions
+	//
+	deleteUnusedExpressions();
+
+	//	9. Delete unused groupId nodes
+	//
+	deleteUnusedCommon("groupId", 0, "Deleting unused groupID nodes" );
+
+	//	10. Delete unused animCurve nodes
+	//
+	deleteUnusedCommon("animCurve", 0, "Deleting unused animation curves" );
+		   
+	//	11. Delete unused snapshot nodes
+	//
+	deleteUnusedCommon("snapshot", 1,"Deleting unused snapshot nodes" );
+
+	//	12. Delete unused unitConversion nodes
+	//
+	//deleteUnusedCommon_Multi({"unitConversion","timeToUnitConversion","unitToTimeConversion"},1, "Deleting unused unit conversion nodes" );
+
+	//	13. Delete unused rendering nodes
+	//
+	MLdeleteUnused();
+
+	//	14. Delete unused cached datablock stuff
+	//
+	clearCache -allNodes;
+	
+	//	15. Delete empty transforms
+	//
+	deleteEmptyGroups();
+	
+	//	16. Delete empty display layers
+	//
+	deleteEmptyLayers("Display");
+	
+	//	17. Delete empty render layers
+	//
+	deleteEmptyLayers("Render");
+    
+	//	18. Delete unused sets
+	//
+	deleteUnusedSets();
+
+	//	19. Delete unused partitions
+	//
+    	deleteUnusedCommon( "partition", 0, "Deleting empty partitions" );
+	
+	//	20. Delete unused reference nodes
+	//
+	RNdeleteUnused();
+
+	//	21. Delete unused brushes
+	//
+	deleteUnusedBrushes();
+
+}

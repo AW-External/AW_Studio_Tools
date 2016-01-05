@@ -1,0 +1,29 @@
+global proc float[] DML_KEY_TIMES (string $joint, string $attr, int $Start, int $End)
+{
+	string $x,$y,$z;
+	
+	if($attr == "rotate")
+	{
+		$x="rx"; $y="ry"; $z="rz";
+	}
+	else if($attr == "translate")
+	{
+		$x="tx"; $y="ty"; $z="tz";
+	}
+	else if($attr == "scale")
+	{
+		$x="sx"; $y="sy"; $z="sz";
+	}
+	else
+	{
+		error "incorrect Attr input name";
+	}
+	
+	//list of float values for all The Rotation Attr
+	//
+	float $FTimes[] = keyframe("-at",$x,"-at",$y,"-at",$z,"-time",($Start+":"+$End),"-query","-timeChange");
+	
+	$FTimes = DML_MOD_KEYTIMES($FTimes,$Start,$End);
+	
+	return $FTimes;
+}

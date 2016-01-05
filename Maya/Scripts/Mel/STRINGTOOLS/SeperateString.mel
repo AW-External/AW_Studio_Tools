@@ -1,0 +1,12 @@
+global proc string[] SeperateString (string $item)
+{
+	string 	$charList[];
+	int		$x;
+	
+	for ($x=1; $x<(size($item) + 1); $x++)
+	{
+		$charList[size($charList)] = `substring $item $x $x`;
+	}
+	
+	return $charList;
+}

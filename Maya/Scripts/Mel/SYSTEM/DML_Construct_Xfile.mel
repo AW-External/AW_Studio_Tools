@@ -1,0 +1,724 @@
+proc string Get_Raw_Directory()
+{
+	//GETS THE FULL FILE PATH OF THE CURRENTLY WORKING SCENE
+	string $Path = `DML_Save_Location " -q -drx -raw"`;
+	
+	//MAKES SURE THE DIR IS AVALABLE
+	if (`filetest -d $dir`==0)
+	{
+		//IF NOT FOUND MAKE DIRECTORY
+		sysFile -makeDir $dir;
+	}
+	
+	return $dir;
+}
+
+proc string Clear_Raw_Directory(string $dir)
+{
+    string $dir = `Get_Raw_Directory`;
+    
+	//MAKES SURE THE DIR IS AVALABLE
+	if (`filetest -d $dir`==0)
+	{
+		//IF NOT FOUND MAKE DIRECTORY
+		sysFile -makeDir $dir;
+	}
+	else
+	{
+		//IF FOUND REMOVE ANY DATA IN DIRECTORY
+		string $filelist[] = `getFileList -folder $dir -filespec "*.*"`;
+		
+		for ($f in $filelist)
+			sysFile -delete ($dir+$f);
+	}
+	
+	return $dir;
+}
+
+proc string[] Import_File_Data (string $Full_Path_Name)
+{
+
+	string $File[6000];
+	
+	//OPENS FILE FOR SCANNING
+	int $Id = fopen($Full_Path_Name,"r");
+	
+	//KEEPS A WORKING TALLY OF HOW MANY LINES HAVE BEEN RETREVED SECONDS AS AND ITARATOR
+	int $Counter = 0;
+	
+	//CHECK TO MAKE SURE THERE IS DATA IN THIS FILE BEFORM SETING TILL END OF FILE FUCTION
+	if(size(`fgetline $Id`))
+	{
+		//AFTER CONFERMING DATA RESETS THE FILE AND STARTS FREASH
+		frewind $Id;
+		
+		//DON'T STOP TILL END OF FILE
+		while(!`feof $Id`)
+		{
+			//GRAB THE NEXT LINE FROM THE FILE
+			$File[$Counter] =  strip(`fgetline $Id`);
+			
+			//MAKES SURE THAT WE ARE NOT GRABING A BLANK OR EMPTY LINE BECAUSE THAT WOULD BE DUMB
+			if(size(`match "[[a-zA-Z},{}0-9;]" $File[$Counter]`))
+			{
+				//ADDS EVERYTHING BUT THE NEWLINE RETURN "\N"
+				$File[$Counter] = `substring $File[$Counter] 1 (size($File[$Counter]))`;
+				$Counter++;
+			}
+		}
+	}
+	
+	fclose $Id;
+	
+	return $File;
+}
+
+proc string[] Retreave_Assembly_Files()
+{    
+ 
+   string $Name = basename(`file -q -sceneName -shortName`,("."+(fileExtension(`file -q -sceneName -shortName`))));
+    
+    //CURRENTLY WORKING SCENE
+    string $Path = (`workspace -fullName`+"/data/DML_Raw_Data/");
+	
+	$Path = toNativePath($Path+$Name+"/Assembies/");
+    
+    //MAKES SURE THE DIR IS AVALABLE
+    if (`filetest -d $Path`==0)
+    {
+        //IF NOT FOUND MAKE DIRECTORY
+        error ("Assembies Directory Could not be found");
+    }
+    else
+    {
+        //IF FOUND REMOVE ANY DATA IN DIRECTORY
+        string $filelist[] = `getFileList -folder $Path -filespec "*.txt"`;
+        
+        int $i;
+        
+        for($i in `DML_Range 0 (size($filelist)) 1`)
+        {
+            $filelist[$i] = ($Path+$filelist[$i]);
+        }
+            
+        return $filelist;
+    }
+}
+
+proc Open_Assembly_File (string $File)
+{
+    global int $G_ASSem_id;
+    
+    $G_ASSem_id = fopen($File,"r");
+    
+    if(!(size(`fgetline $G_ASSem_id`)))
+    {
+        fclose $G_ASSem_id;
+        error"There Was No Data in The Opened Assembly File";
+    }
+    
+    frewind $G_ASSem_id;
+}
+
+proc string Read_Word_From_Assembly_File ()
+{
+    global int $G_ASSem_id;
+    
+    return `fgetword $G_ASSem_id`;
+}
+
+proc Set_Padding()
+{
+	global string $Padding;
+    
+    string $s = `Read_Word_From_Assembly_File`;
+    
+    int $j = $s;
+	
+	int $i = 0;
+	
+	$Padding = "";
+	
+    while($i<$j)
+	{
+		$Padding += ("\t");
+		$i++;
+	}
+}
+
+proc Close_Assembly_File ()
+{
+    global int $G_ASSem_id;
+    
+    fclose $G_ASSem_id;
+}
+
+proc int End_Of_Assemblyfile ()
+{
+    global int $G_ASSem_id;
+    
+    if(`feof $G_ASSem_id`)
+    {
+        return no;
+    }
+    else
+    {
+        return yes;
+    }
+}
+
+proc Open_Rawfile (string $File)
+{
+    global int $Raw_id;
+    
+    $Raw_id = fopen($File,"r");
+    
+    if(!(size(`fgetline $Raw_id`)))
+    {
+        fclose $Raw_id;
+        error"There Was No Data in The Opened Raw File";
+    }
+    
+    frewind $Raw_id;
+}
+
+proc string Read_Word_From_RawFile ()
+{
+
+    global int $Raw_id;
+    
+    return `fgetword $Raw_id`;
+}
+
+proc string Read_Line_From_RawFile ()
+{
+
+    global int $Raw_id;
+    
+    return (strip(`fgetline $Raw_id`));
+}
+
+proc Rewind_RawFile ()
+{
+    global int $Raw_id;
+    
+    frewind $Raw_id;
+}
+
+proc Close_Rawfile ()
+{
+
+    global int $Raw_id;
+    
+    fclose $Raw_id;
+}
+
+proc int End_Of_Rawfile ()
+{
+    global int $Raw_id;
+    
+    if(`feof $Raw_id`)
+    {
+        return no;
+    }
+    else
+    {
+        return yes;
+    }
+}
+
+proc string Open_Xfile (string $Raw_Dir, string $File)
+{
+    
+    global int $G_xid;
+    
+    string $xFile = `basename $File ".txt"`;
+    
+    $G_xid = `fopen ($Raw_Dir+$xFile+".x") "w"`;
+		
+    fprint $G_xid "xof 0303txt 0032\n";
+    
+    return ($Raw_Dir+$xFile+".x");
+}
+
+proc Write_To_Xfile (string $Item)
+{
+
+    global int $G_xid;
+    
+    fprint $G_xid ($Item);
+}
+
+proc Write_To_Xfile_With_Padding (string $Item)
+{
+
+	global string $Padding;
+    
+    Write_To_Xfile ($Padding+$Item);
+}
+
+proc Close_Xfile ()
+{
+
+    global int $G_xid;
+    
+    fclose $G_xid;
+}
+
+proc Write_Matrix_To_Xfile()
+{
+	
+	string $word;
+    
+	Write_To_Xfile_With_Padding "FrameTransformMatrix {\n";
+    
+	while(!`gmatch $word "End_Matrix"`)
+	{
+        $word = `Read_Word_From_RawFile`;
+        
+        if(`gmatch $word "mx"`)
+        {
+            Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+        }
+	}
+	
+	Write_To_Xfile_With_Padding("}\n");
+}
+
+proc Write_Vertices_To_Xfile()
+{
+
+	string $word;
+	
+    while(!`gmatch $word "End_Vertices"`)
+    {
+    	$word = `Read_Word_From_RawFile`;
+
+    	if(`gmatch $word "nvp"`)
+    	{
+    		Write_To_Xfile_With_Padding (`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "vp"`)
+    	{
+    		Write_To_Xfile_With_Padding (`Read_Word_From_RawFile`+"\n");
+    	}
+    }
+}
+
+proc Write_Normals_To_Xfile()
+{
+
+	string $word;
+    
+    Write_To_Xfile_With_Padding "MeshNormals {\n";
+	
+    while(!`gmatch $word "End_Normals"`)
+    {
+    	$word = `Read_Word_From_RawFile`;
+
+    	if(`gmatch $word "nvn"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "vn"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+    }
+}
+
+proc Write_Normals_Indices_To_Xfile()
+{
+    string $word;
+    
+    while(!`gmatch $word "End_Normals_Indexing"`)
+    {
+    	$word = `Read_Word_From_RawFile`;
+
+    	if(`gmatch $word "nidx"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "idx"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+    }
+    Write_To_Xfile_With_Padding "}\n";
+}
+
+proc Write_Vertex_Indices_To_Xfile()
+{
+    string $word;
+    
+    while(!`gmatch $word "End_Vertex_Indexing"`)
+    {
+    	$word = `Read_Word_From_RawFile`;
+
+    	if(`gmatch $word "nidx"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "idx"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+    }
+}
+
+proc Write_Vertex_Colors_To_Xfile()
+{
+    string $word;
+    
+    Write_To_Xfile_With_Padding "MeshVertexColors {\n";
+    
+    while(!`gmatch $word "EndVertex_Color"`)
+    {
+    	$word = `Read_Word_From_RawFile`;
+
+    	if(`gmatch $word "nvc"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "vc"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+    }
+    
+    Write_To_Xfile_With_Padding "}\n";
+}
+
+proc Write_Textrue_Coords_To_Xfile()
+{
+    string $word;
+    
+    Write_To_Xfile_With_Padding "MeshTextureCoords {\n";
+    
+    while(!`gmatch $word "End_Texture_Coords"`)
+    {
+    	$word = `Read_Word_From_RawFile`;
+
+    	if(`gmatch $word "nuv"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "uv"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+    }
+    
+    Write_To_Xfile_With_Padding "}\n";
+}
+
+proc Write_Material_List_To_Xfile()
+{
+    string $word;
+    
+    Write_To_Xfile_With_Padding "MeshMaterialList {\n";
+    
+    while(!`gmatch $word "End_Material_IDs"`)
+    {
+    	$word = `Read_Word_From_RawFile`;
+
+    	if(`gmatch $word "ns"`)
+    	{
+    		Write_To_Xfile_With_Padding (`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "nf"`)
+    	{
+    		Write_To_Xfile_With_Padding (`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "id"`)
+    	{
+    		Write_To_Xfile_With_Padding (`Read_Word_From_RawFile`+"\n");
+    	}
+    }
+
+}
+
+proc Write_Material_To_Xfile()
+{
+    string $word;
+        
+    while(!`gmatch $word "End_Material_List"`)
+    {
+    	$word = `Read_Word_From_RawFile`;
+
+    	if(`gmatch $word "na"`)
+    	{
+    		Write_To_Xfile_With_Padding("Material "+`Read_Word_From_RawFile`+" {\n");
+    	}
+
+    	if(`gmatch $word "rgba"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "pw"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "sc"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "em"`)
+    	{
+    		Write_To_Xfile_With_Padding(`Read_Word_From_RawFile`+"\n");
+    	}
+
+    	if(`gmatch $word "tx"`)
+    	{
+            $word = `Read_Word_From_RawFile`;
+            
+            if($word!="None")
+            {
+                Write_To_Xfile_With_Padding "TextureFilename {\n";
+                 
+    		    Write_To_Xfile_With_Padding(("\" ")+$word+(" \" ;")+"\n");
+                
+                Write_To_Xfile_With_Padding "}\n";
+            }
+            
+            Write_To_Xfile_With_Padding "}\n";
+    	}
+    }
+}
+
+proc Scan_Transform_File()
+{   
+    string $word = `Read_Word_From_Assembly_File`;
+
+	Open_Rawfile `Get_Save_Location "Transform" $word`;
+    
+	//CHECK TO MAKE SURE THERE IS DATA IN THIS 
+	while(`End_Of_Rawfile`)
+    {
+        string $word = `Read_Word_From_RawFile`;
+                
+    	if(`gmatch $word "Name"`)
+    	{
+            Write_To_Xfile_With_Padding ("Frame "+ `Read_Word_From_RawFile` + " {\n");
+    	}
+        
+    	if(`gmatch $word "Start_Matrix"`)
+    	{
+           Write_Matrix_To_Xfile;
+    	}
+    }
+    
+	Close_Rawfile;
+}
+
+proc string[] DXOPS(string $filelist[])
+{
+    string $script = "";
+        
+    string $File;
+    
+    string $OpsFiles[];
+    
+    for($File in $filelist)
+    {
+	    string $readLocation = ($File);
+        string $file = `basename $File ".x"`;
+	    string $saveLocation = ("C:\\DML_Temp\\OpsXfiles\\DXops_"+$file+".x");
+        
+        $OpsFiles[`size $OpsFiles`] = $saveLocation; 
+    
+	    $script = "C:\\SDDXOps.exe ";
+	    $script += ("-s \"load fileName:" +$readLocation+";\" ");
+	    $script += ("-s \"validate src:"+$file+";\" ");
+	    $script += ("-s \"clean src:"+$file+";\" ");
+	    $script += ("-s \"optimize src:"+$file+" e:0.5 P W N T B UV D S PS F;\" ");
+	    $script += ("-s \"stripify src:"+$file+";\" ");
+		$script += ("-s \"gennormals src:"+$file+";\" ");
+	    $script += ("-s \"meshes src:;\" ");
+	    $script += ("-s \"textures src:;\" ");
+	    $script += ("-s \"save fileName:" + $saveLocation+";\" ");
+	    $script += ("-s \"unload src: type:models;\" ");
+	    $script += ("-s \"reset;\" ");
+	    print (system(($script)));
+    }
+    return $OpsFiles;
+}
+
+proc Make_Xfiles(string $Xfiles[],string $OpsFiles[])
+{
+    string $File,$Assemblies[] = `Retreave_Assembly_Files`;
+    
+    clear $Xfiles;
+    
+    string $Raw_Directory = `Get_Raw_Directory`;
+    
+    for($File in $Assemblies)
+    {
+        
+       $Xfiles[`size $Xfiles`] = (Open_Xfile($Raw_Directory,$File));
+        
+        Open_Assembly_File $File;
+        
+        while(`End_Of_Assemblyfile`)
+        {
+            string $word = `Read_Word_From_Assembly_File`;
+        
+            switch($word)
+            {
+                case "Open":
+                
+                    Set_Padding;
+                    
+                    $word = `Read_Word_From_Assembly_File`;
+                    
+                    switch($word)
+                    {
+                        case "Transform":
+                            Scan_Transform_File;
+                        break;
+                        
+                        case "Mesh":
+                            DML_ScanMeshFile;
+                        break;
+                    }
+                    
+                break;
+                
+                case "Close":
+                
+                    Set_Padding; 
+                
+                    Write_To_Xfile_With_Padding "}\n";
+                
+                break;
+            }
+        }
+        
+        Close_Assembly_File;
+        
+        Close_Xfile;
+    }
+}
+
+proc int[] range (int $j)
+{
+    int $range[];
+    while(`size $range` < $j)
+        $range[`size $range`]= `size $range`;
+        
+    return $range;
+}
+
+proc string makeSpace(string $S)
+{
+    string $return = ""; 
+    int $j = size(`match "^[ ]+" $S`);
+    int $i;
+    for($i in `range $j`)
+    {
+        $return += " ";
+    }
+    return $return;
+}
+
+proc string Reinsert_Material_Data (string $Xfile,string $OpsFile)
+{
+    string $Shaders_Inserts[];
+    
+    int $Id1 = fopen($Xfile,"r");
+    
+    if(size(`fgetline $Id1`))
+    {
+        frewind $Id1;
+        
+        while(!`feof $Id1`)
+        {
+            string $line =  `fgetline $Id1`;
+            
+            if(`match "^Material" (strip($line))`== "Material")
+            {
+                string $Words[];
+                tokenize $line " " $Words;
+                $Shaders_Inserts[`size $Shaders_Inserts`] = strip($Words[1]);
+            }
+        }
+    }
+    
+    fclose $Id1;
+    
+    $path = ("C:\\DML_Temp\\ReparsedXfiles\\");
+    
+    string $file = `basename $Xfile ".x"`;
+    
+    int $Id1 = fopen($OpsFile,"r");
+    
+    int $Id2 = fopen(($path+$file+".x"),"w");
+
+    int $insertCount = 0;
+    if(size(`fgetline $Id1`))
+    {
+        frewind $Id1;
+        
+        while(!`feof $Id1`)
+        {
+            string $line =  `fgetline $Id1`;//
+            
+            if(size(`match "[\[.a-zA-Z},{0-9;]" $line`))
+            {
+                if(`match "^Material" (strip($line))`== "Material")
+                {
+                    string $Space = `makeSpace $line`;
+                    fprint $Id2 ($Space+"Material " + $Shaders_Inserts[$insertCount++]+" {\n");
+                }
+                else
+                {
+                    fprint $Id2 (`substring $line 1 (size($line) -1)`+"\n");
+                }
+            }
+        }
+    }
+    fclose $Id1;
+    fclose $Id2;
+    
+    return ($path+$file);
+}
+
+proc string[] Parser(string $Xfiles[], string $OpsFiles[])
+{
+    
+    int $i;
+    
+    int $itr[] = range(`size $Xfiles`);
+    
+    string $reparsed[];
+    
+    for($i in $itr)
+    {
+       $reparsed[`size $reparsed`] = `Reinsert_Material_Data $Xfiles[$i] $OpsFiles[$i]`;
+    }
+    return $reparsed;
+}
+
+global proc DML_Construct_Xfile()
+{
+   string $Xfiles[];
+   string $OpsFiles[];
+   
+   Make_Xfiles($Xfiles,$OpsFiles);
+   
+   $OpsFiles = `DXOPS $Xfiles`;
+   
+   string $reparsed[] = `Parser $Xfiles $OpsFiles `;
+
+}

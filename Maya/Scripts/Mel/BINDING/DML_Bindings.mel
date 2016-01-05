@@ -1,0 +1,97 @@
+global proc DML_Bindings()
+{
+    //GET THE CURRENTLY SELECTED OBJECT
+	//
+	string $skins[],$Selected = DML_PureName(`DML_FirstSelected`);
+	
+	//GET THE HISTORY OF THE SHAPE AND WHAT HAS BEEN APPLYED TO IT
+	//
+	string $h,$History[] = `listHistory  -pruneDagObjects 1 -interestLevel 2 $Selected`;
+	
+	//SCAN THROUGH THE HISTORY
+	//
+	for ($h in $History)
+	{
+		//SEARCH FOR SKINING MODIFIERS
+		//
+		if (nodeType($h) == "skinCluster")
+		{
+			//ADD IT TO A COLLECTION 
+			//
+			$skins[size($skins)] = $h ;
+		}
+	}
+    
+	//SCAN THROUGH THE COLLECTED SKINING MODIFIRES
+	//
+	for ($skin in $skins)
+	{
+		//GET THE INDEXEING THAT WAS USED IN THE UV BASED INDEXING SO THAT OUR 
+		//BINDING DATA IS IN SYNC WITH OUR VERTEX DATA INDICINGS
+		//
+		int $indexCount = `DML_EvaluatePoly "v"`;
+        
+		//THE LIST OF JOINTS THAT ARE INVALVED WITH THE CURRENT SKIN CLUSTER
+		//
+		string $joint,$joints[] = `skinCluster -q -weightedInfluence $skin`;
+        
+        //THE MAX AMOUNT OF INDAVIDUAL TRANSFORMS THAT CAN DEFORM ANY GIVEN VERTX AT THE SAME TIME
+        //
+        int $WeightsPerVertex = 3;
+        
+        //THE MAX AMOUNT OF INDAVIDUAL TRANSFORMS THAT CAN DEFORM ANY GIVEN FACE AT THE SAME TIME
+        //        
+        int $WeightsPerFace = $WeightsPerVertex;
+
+        //THE TOTALE NUMBER OF TRANSFORMS THAT ARE AFFECTING THIS MESH
+        //        
+        int $nBones = size($joints);
+		
+		//SCAN THROUGH ALL THE INVALVED JOINTS
+		//
+		for($joint in $joints)
+		{
+			//Used To Keep track of the current index
+            //because the the uv based indexing repeats
+            //
+			int $currentIndex = 0;
+            int $Couter = 0;
+            
+			float $weights[];
+            clear $weights;
+			
+            //scan through the all uv based Vertex indices
+            //
+			for ($currentIndex in `DML_Range 0 $indexCount 1`)
+            {
+                //GET the current index weighted influence
+                //
+                float $influence = `skinPercent -transform $joint -q $skin ($Selected+".vtx["+$currentIndex+"]")`;
+                    
+                //Add it to this joints influenced indexes
+                //
+                $weights[size($weights)] = $influence;
+            }
+            
+			float $DXweights[];
+
+            clear $DXweights;
+            
+            for ($currentIndex in `DML_PolagonFaceIndexWinding`)
+            {
+            
+                $DXweights[$Couter] = $weights[$currentIndex];
+                 
+                //Add The Current in index that this weight is applied to
+                //
+                $weightedIndexes[$Couter] = $Couter++;
+            }
+            
+            DML_DisplayFA ("DXweights",$DXweights,($Couter));
+            
+            //float $OffsetMatrix[] = `getAttr ($joint+".worldInverseMatrix")`;
+        }
+    
+    }
+}
+DML_Bindings;

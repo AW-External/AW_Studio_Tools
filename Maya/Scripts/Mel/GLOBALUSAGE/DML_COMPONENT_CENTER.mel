@@ -1,0 +1,164 @@
+proc int IsGroup (string $Transform)
+{
+    //Does This Node Have A Parent
+    if(!size(`listRelatives -c -shapes $Transform`))
+    {
+        if(`objectType $Transform`=="transform")
+        {
+            //Add The Parent To the Current selection list
+            return yes;
+        }
+    }
+    return no;
+}
+
+
+proc string GetShape(string $Transform)
+{	
+	string $shape[] = `listRelatives -s -c -f  $Transform`;
+	
+	return $shape[0];
+}
+
+proc string Node_Type (string $Transform)
+{
+    if(`IsGroup $Transform`)
+    {
+        return "group";
+    }
+    else if (`objectType $Transform`=="transform")
+    {
+        string $shape = `GetShape $Transform`;
+		
+        return `objectType $shape`;
+    }
+    else
+    {
+        return `objectType $Transform`;
+    }
+}
+
+proc vector Nurbs_Curve (string $Transform)
+{
+	int $ix,$iy,$iz;
+	
+	float $x,$y,$z;
+	
+	vector $xyz;
+	
+	float $CVs[] = `xform -q -ws -t ($Transform + ".cv[*]" )`;
+	
+	int $allCVs = (`size $CVs`);
+	
+	int $CVCount = ($allCVs /3);
+	
+	for($ix = 0, $iy = 1, $iz = 2; $ix < $allCVs; $ix += 3, $iy += 3, $iz += 3)
+	{ 
+		$x += $CVs[$ix];
+		
+		$y += $CVs[$iy];
+		
+		$z += $CVs[$iz];
+	}
+	
+	$xyz = <<($x/$CVCount),($y/$CVCount),($z/$CVCount)>>;
+	
+	return $xyz;
+}
+
+proc vector Nurbs_Surface (string $Transform)
+{
+	int $ix,$iy,$iz;
+	
+	float $x,$y,$z;
+	
+	vector $xyz;
+	
+	int $maxU = `getAttr ($Transform + ".spansU")` + 3;
+	
+	int $maxV = `getAttr ($Transform + ".spansV")`;
+	
+	float $CVs[] = `xform -q -ws -t ( $Transform + ".cv[0:" + $maxU + "][0:" + $maxV + "]" )`;;
+	
+	int $allCVs = (`size $CVs`);
+	
+	int $CVCount = ($allCVs /3);
+	
+	for($ix = 0, $iy = 1, $iz = 2; $ix < $allCVs; $ix += 3, $iy += 3, $iz += 3)
+	{ 
+		$x += $CVs[$ix];
+		
+		$y += $CVs[$iy];
+		
+		$z += $CVs[$iz];
+	}
+	
+	$xyz = <<($x/$CVCount),($y/$CVCount),($z/$CVCount)>>;
+	
+	return $xyz;
+}
+
+proc vector Mesh_Verts (string $Transform)
+{
+	int $i;
+	
+	float $x,$y,$z;
+	
+	vector $xyz;
+	
+	string $comp,$comps[] = `ls -flatten ($Transform+".vtx[*]")`;
+	int $VertCount = (`size $comps`);
+	
+	for($comp in $comps)
+	{
+		float $flt[] =  `pointPosition -w $comp`;
+		
+		$x += $flt[0];
+		
+		$y += $flt[1];
+		
+		$z += $flt[2];
+	}
+	
+	$xyz = <<($x/$VertCount),($y/$VertCount),($z/$VertCount)>>;
+	
+	return $xyz;
+}
+
+global proc vector DML_COMPONENT_CENTER (string $Transform)
+{
+	vector $xyz;
+	
+	string $Type = `Node_Type $Transform`;
+	
+	switch ($Type)
+	{
+		case"mesh":
+		{
+			$xyz = `Mesh_Verts $Transform`;
+			break;
+		}
+		case"nurbsCurve":
+		{
+            $xyz = `Nurbs_Curve $Transform`;
+			break;
+		}
+		case"nurbsSurface":
+        {
+			$xyz = `Nurbs_Surface $Transform`;
+			break;
+        }
+		case"locator":
+        {
+			$xyz = `getAttr($Transform+".worldPosition")`;
+		    break;
+        }
+		case"group":
+        {
+			$xyz = `xform -query -worldSpace -rp $Transform`;;
+		    break;
+        }
+	}
+			
+			return $xyz;
+}

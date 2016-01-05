@@ -1,0 +1,23 @@
+//shifts entries inclusive from the start index, to the end index up (ie towards zero) in an array
+global proc string[] ShiftArrayUp( string $array[], int $startIndex, int $endIndex )
+{
+	string $newArray[];
+	
+	int $displaced = $startIndex-1;
+	
+	int $num = ( $endIndex-$startIndex )+1;
+
+	if( $startIndex == 0 ) return $array;
+
+	//copy the original array to the newArray variable
+	for( $n = 0; $n < `size $array`; $n++ ) $newArray[$n] = $array[$n];
+
+	int $i = $startIndex-1;
+	
+	for( $n = 0; $n < $num; $n++, $i++)
+		$newArray[$i] = $array[( $i+1 )];
+
+	$newArray[$endIndex] = $array[$displaced];
+	
+	return $newArray;
+}

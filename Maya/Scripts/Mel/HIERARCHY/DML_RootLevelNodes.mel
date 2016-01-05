@@ -1,0 +1,16 @@
+global proc string[] DML_RootLevelNodes()
+{
+	global string $G_Egnore_List[];
+	
+	string $item,$RootParents[];
+	
+	for($item in `ls -long -type transform`)
+		if(
+			(!size(`listRelatives -p -typ transform $item`))&&
+			(size(`listRelatives -ad -type mesh $item`))&&
+			(!size(`listRelatives -ad -type "camera" $item`))
+		)
+		$RootParents[size($RootParents)] = $item;
+
+	return $RootParents;
+}

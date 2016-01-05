@@ -1,0 +1,31 @@
+//Action: 				this one will subtract the contents of array1 from array2.
+//						All items in array2 that also appear in array1 will be removed in the returned result.
+//
+//Examples:
+//						string $fatArray1[] = {"blue", "red", "green", "yellow", "violet"};
+//						string $fatArray2[] = {"blue", "red"};
+//						subtractStringArray $fatArray2 $fatArray1;
+//						// Result: green yellow violet //
+
+
+
+global proc string[] SubtractArray (string $array1[], string $array2[])
+{
+	string $x;
+	string $y;
+	string $newArray[];
+	int $itemFound = 0;
+
+
+	for ($x in $array2)
+	{
+		$itemFound = 0;
+		for ($y in $array1)
+		{
+			if ($x == $y) {$itemFound = 1;}
+		}
+		if ($itemFound == 0) {$newArray[size($newArray)] = $x;}
+	}
+
+	return ($newArray);
+}

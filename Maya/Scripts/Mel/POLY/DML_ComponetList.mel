@@ -1,0 +1,31 @@
+global proc string[] DML_ComponetList (string $item)
+{
+	string $selected = `DML_FirstSelected`;
+	
+	switch ($item)
+	{
+	case "vtxf":
+		return ` ls -flatten ($selected+".vtxFace[*]") `;
+
+	case "f":
+		return ` ls -flatten ($selected+".f[*]") `;
+
+	case "cpx":
+		return ` ls -flatten ($selected+".cp[*]xv") `;
+		
+	case "cpy":
+		return ` ls -flatten ($selected+".cp[*]yv") `;
+		
+	case "cpz":
+		return ` ls -flatten ($selected+".cp[*]zv") `;
+
+	case "map":
+		return ` ls -flatten ($selected+".map[*]") `;
+
+	case "vtx":
+		return ` ls -flatten ($selected+".vtx[*]") `;
+
+	default:
+		error "please input After proc 'a mesh' flowed by `vtxf`,'f','cpx','cpy','cpz','map','uv'";
+    }
+}

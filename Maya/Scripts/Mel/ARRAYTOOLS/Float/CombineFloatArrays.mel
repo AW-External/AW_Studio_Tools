@@ -1,0 +1,10 @@
+//RETURNS THE SUMMED RESULT OF THE TWO SUPPLIED ARRAYS.
+//
+global proc CombineFloatArrays (float $array1[], float $array2[])
+{
+	float $x;
+
+	//ADD THE TWO ARRAYS TOGETHER
+	for ($x in $array2)
+		$array1[size($array1)] = $x;
+}

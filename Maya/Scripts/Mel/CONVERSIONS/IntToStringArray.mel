@@ -1,0 +1,24 @@
+global proc int IntToStringArray (string $StringArray[], int $IntArray[],int $numberToCopy)
+{
+	if(!$numberToCopy)$numberToCopy = `size $IntArray`;
+	
+	if(`size $IntArray`)
+	{
+		int $IntHolder[] = $IntArray;
+		clear $IntArray; clear $StringArray;
+		
+		int $i=0;
+		while($i<$numberToCopy)
+			$StringArray[$i] = `IntToString $IntHolder[$i++]`;
+			
+		$i=0;
+		while($numberToCopy < `size $IntHolder`)
+			$IntArray[$i++] = $IntHolder[$numberToCopy++];
+			
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}

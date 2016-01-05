@@ -1,0 +1,23 @@
+global proc string[] DML_ANIMATED_LOCATORS()
+{
+	string $locator,$Animated_Locator_Transforms[];
+	
+	string $LocatorTransforms[] = listTransforms("-visible -type locator");
+	
+	//Scan Through All The Joints
+	//
+	for($locator in $LocatorTransforms)
+	{
+		//Check To see If The Current Joint Has Animation
+		//
+		if(keyframe("-query","-keyframeCount",$locator))
+		{
+			//Add it To the Final List
+			//
+			$Animated_Locator_Transforms[size($Animated_Locator_Transforms)] = $mesh;
+		}
+	}
+	//Outputs A list Off All joints With Animation
+	//
+	return $Animated_Locator_Transforms;
+}

@@ -1,0 +1,18 @@
+global proc DML_Open(string $text)
+{
+		$text = `whatIs $text`;
+		
+		if (`startsWith $text S`)
+		{
+			$text = match("[^Script found in: ].+",$text);
+		}
+		else if (`startsWith $text M`)
+		{
+			$text = match("[^Mel procedure found in: ].+",$text);
+		}
+		
+		if($text != "Unknown")
+		{
+			system ("load "+$text);
+		}
+}

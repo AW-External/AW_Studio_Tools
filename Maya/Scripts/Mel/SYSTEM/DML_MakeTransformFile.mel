@@ -1,0 +1,50 @@
+proc Open_Transform_File ()
+{
+    global int $G_Trasnform_id;
+    
+    //string $Name = (DML_PureName(`DML_FirstSelected`));
+    
+    string $File = ("C:/Documents and Settings/Drew Loveridge/My Documents/maya/DML_Extraction_Data/PM_Assets/Cube/Meshs/Transform.txt");
+    
+    $G_Trasnform_id = `fopen $File "w"`;
+}
+
+proc Close_Transform_File ()
+{
+    global int $G_Trasnform_id;
+    
+    $G_Trasnform_id = `fclose $G_Trasnform_id`;
+}
+
+
+proc Write_Transform_Name()
+{
+    global int $G_Trasnform_id;
+    
+    fprint $G_Trasnform_id ("Name\n");   
+    fprint $G_Trasnform_id (DML_PureName(`DML_FirstSelected`)+"\n");
+}
+
+proc Matrix_Printer()
+{
+    global int $G_Trasnform_id;
+    
+    int $i,$add = 0;
+    
+    fprint $G_Trasnform_id ("Matrix\n");
+    
+    string $Matrix[] = (DML_HardCodefloats(`getAttr ".matrix"`));
+    
+    for($i in `DML_Range 0 4 1`)
+    {
+        fprint $G_Trasnform_id ($Matrix[$add++]+" "+$Matrix[$add++]+" "+$Matrix[$add++]+" "+$Matrix[$add++]+"\n");
+    }
+}
+
+global proc DML_MakeTransformFile()
+{
+    Open_Transform_File;
+    Write_Transform_Name;
+    Matrix_Printer;
+    Close_Transform_File;
+}

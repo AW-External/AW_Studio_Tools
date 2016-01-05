@@ -1,0 +1,8 @@
+global proc string GetFirstWord (string $Str)
+{
+	string $List[];
+	
+	tokenize $Str " " $List;
+	
+	return $List[0];
+}

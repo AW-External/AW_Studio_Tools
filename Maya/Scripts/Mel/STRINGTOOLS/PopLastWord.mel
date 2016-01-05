@@ -1,0 +1,22 @@
+global proc string PopLastWord (string $item)
+{
+	string	$tokenList[];
+	string	$returnString;
+	int		$x;
+	
+	tokenize $item " " $tokenList;
+	
+	for ($x=0; $x<(size($tokenList)-1); $x++)
+	{
+		if ($x != (size($tokenList)-2))
+		{
+			$returnString += ($tokenList[$x] + " ");
+		}
+		else
+		{
+			$returnString += $tokenList[$x];
+		}
+	}
+	
+	return $returnString;
+}
